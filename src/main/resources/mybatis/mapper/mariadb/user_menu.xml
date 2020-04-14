@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="user_menu">
+	
+	
+	
+	<select id="getUserMenuBackup" resultType="kr.co.n3n.smartcity.model.CommMap">
+		
+		WITH RECURSIVE ALL_MENU   AS
+		(
+		 SELECT     MENU_ID,
+		            MENU_NM,
+		            UPPER_MENU_ID,
+		            SCRIN_URL,
+		            DEPTH,
+		            ODER
+		 FROM       MENU
+		 WHERE      UPPER_MENU_ID  IS NULL
+		 AND USE_AT='Y'
+		 AND FRONT_MENU_YN='N'
+		 UNION ALL
+		 SELECT     R.MENU_ID,
+		            R.MENU_NM,
+		            R.UPPER_MENU_ID,
+		            R.SCRIN_URL,
+		            R.DEPTH,
+		            R.ODER
+		 FROM       MENU R
+		 INNER JOIN MENU_AUTH
+		         ON R.UPPER_MENU_ID = MENU_AUTH.MENU_ID
+			WHERE R.USE_AT='Y'
+			AND R.FRONT_MENU_YN='N'
+		),
+		MENU_AUTH AS (
+			SELECT 
+					DISTINCT D.* 
+				FROM USER_ROLE_MAPNG A
+				INNER JOIN ROLE B ON A.ROLE_ID=B.ROLE_ID
+				INNER JOIN ROLE_RESRCE_MAPNG C ON B.ROLE_ID=C.ROLE_ID
+				INNER JOIN MENU D ON C.MENU_ID=D.MENU_ID
+				WHERE A.USER_ID=#{USER_ID}
+				AND FRONT_MENU_YN='N'	
+		)
+		SELECT 
+			A.MENU_ID, A.MENU_NM, A.UPPER_MENU_ID, A.VIEW_ID, A.CTL_URL, A.DEPTH, A.ODER
+		FROM MENU_AUTH A
+		INNER JOIN ALL_MENU B ON A.MENU_ID=B.MENU_ID
+	</select>
+	
+	
+	<select id="getUserMenu" resultType="kr.co.n3n.smartcity.model.CommMap">
+		
+			SELECT 
+				DISTINCT D.* 
+			FROM USER_ROLE_MAPNG A
+			INNER JOIN ROLE B ON A.ROLE_ID=B.ROLE_ID
+			INNER JOIN ROLE_RESRCE_MAPNG C ON B.ROLE_ID=C.ROLE_ID
+			INNER JOIN MENU D ON C.MENU_ID=D.MENU_ID
+			WHERE A.USER_ID=#{USER_ID}
+			AND FRONT_MENU_YN='N'
+			AND D.USE_AT='Y'
+			ORDER BY DEPTH ASC, ODER ASC			
+		
+	</select>
+	
+</mapper>

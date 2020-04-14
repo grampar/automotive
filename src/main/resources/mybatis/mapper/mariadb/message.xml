@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="message">
+    
+    <select id="getMsgHisList" resultType="kr.co.n3n.smartcity.model.CommMap">        
+		SELECT 
+			SMS_TRNSMIS_SN, SENDER_ID, SENDER_MBTLNUM, RECEIVER_ID, RECEIVER_MBTLNUM, TRNSMIS_DT, TRNSMIS_MESSAGE 
+		FROM SMS_SNDNG_HIST
+		ORDER BY SMS_TRNSMIS_SN DESC
+    </select>
+    
+    <select id="getMsgHisListPage" resultType="kr.co.n3n.smartcity.model.CommMap">        
+		SELECT SMS_TRNSMIS_SN , SENDER_ID , SENDER_NM , S_GROUP_NM , SENDER_MBTLNUM , RECEIVER_ID , RECEIVER_NM , R_GROUP_NM , RECEIVER_MBTLNUM , TRNSMIS_DT , TRNSMIS_MESSAGE ,
+		       EVENT_CODE_GROUP_ID , EVENT_CODE_ID , EVENT_NO ,
+		       (SELECT CODE_NM FROM CODE CD WHERE CD.CODE_GROUP_ID = EVENT_CODE_GROUP_ID AND CD.CODE_ID = EVENT_CODE_ID) AS EVENT_CODE_NM
+		FROM (
+			SELECT 
+				SS.SMS_TRNSMIS_SN, 
+				SS.SENDER_ID, 
+				(SELECT USER_NM FROM USER UU WHERE UU.USER_ID = SS.SENDER_ID) AS SENDER_NM ,
+				(SELECT USER_GROUP_NM FROM USER_GROUP UG WHERE UG.USER_GROUP_ID = (SELECT USER_GROUP_ID FROM USER UU WHERE UU.USER_ID = SS.SENDER_ID)) AS S_GROUP_NM ,
+				SS.SENDER_MBTLNUM, 
+				SS.RECEIVER_ID, 
+				(
+					CASE WHEN (SELECT USER_NM FROM USER UU WHERE UU.USER_ID = SS.RECEIVER_ID) IS NULL 
+						THEN
+							(SELECT STL.SMS_TRGTER_NM FROM SMS_TRGTER_LIST STL WHERE STL.SMS_TRGTER_ID = SS.RECEIVER_ID)
+						ELSE 
+							(SELECT USER_NM FROM USER UU WHERE UU.USER_ID = SS.RECEIVER_ID)
+					END
+				) AS RECEIVER_NM ,
+				(
+					CASE WHEN (SELECT USER_GROUP_NM FROM USER_GROUP UG WHERE UG.USER_GROUP_ID = (SELECT USER_GROUP_ID FROM USER UU WHERE UU.USER_ID = SS.RECEIVER_ID)) IS NULL 
+						THEN
+							(SELECT STL.SMS_TRGTER_PSITN FROM SMS_TRGTER_LIST STL WHERE STL.SMS_TRGTER_ID = SS.RECEIVER_ID)
+						ELSE 
+							(SELECT USER_GROUP_NM FROM USER_GROUP UG WHERE UG.USER_GROUP_ID = (SELECT USER_GROUP_ID FROM USER UU WHERE UU.USER_ID = SS.RECEIVER_ID))
+					END
+				) AS R_GROUP_NM ,
+				SS.RECEIVER_MBTLNUM, 
+				SS.TRNSMIS_DT, 
+				SS.TRNSMIS_MESSAGE,
+				SS.EVENT_CODE_GROUP_ID,
+				SS.EVENT_CODE_ID,
+				SS.EVENT_NO
+			FROM SMS_SNDNG_HIST SS
+		) VV
+		WHERE 1=1
+		<if test="sender != null and sender != ''">
+		  AND (VV.SENDER_NM LIKE CONCAT('%',#{sender},'%') OR VV.SENDER_MBTLNUM LIKE CONCAT('%',#{sender},'%'))
+		</if>
+		<if test="receiver != null and receiver != ''">
+		  AND (VV.RECEIVER_NM LIKE CONCAT('%',#{receiver},'%') OR VV.RECEIVER_MBTLNUM LIKE CONCAT('%',#{receiver},'%'))
+		</if>
+		<if test="msg != null and msg != ''">
+		  AND VV.TRNSMIS_MESSAGE LIKE CONCAT('%',#{msg},'%')
+		</if>
+		
+		<if test="startDateTime != null and startDateTime != '' and endDateTime != null and endDateTime != ''">
+		  AND VV.TRNSMIS_DT BETWEEN STR_TO_DATE(#{startDateTime} , '%Y%m%d%H%i') AND STR_TO_DATE(#{endDateTime} , '%Y%m%d%H%i')
+		</if>
+		AND VV.SENDER_ID = #{senderId}
+		ORDER BY VV.SMS_TRNSMIS_SN DESC
+		<if test="startNum != null and startNum != ''">
+			LIMIT #{startNum}, #{pageCnt}
+		</if>
+    </select>
+    
+    <select id="getMsgHisListPageCnt" resultType="kr.co.n3n.smartcity.model.CommMap">        
+		SELECT COUNT(*) AS TOTAL_COUNT
+		FROM (
+			SELECT 
+				SS.SMS_TRNSMIS_SN, 
+				SS.SENDER_ID, 
+				(SELECT USER_NM FROM USER UU WHERE UU.USER_ID = SS.SENDER_ID) AS SENDER_NM ,
+				(SELECT USER_GROUP_NM FROM USER_GROUP UG WHERE UG.USER_GROUP_ID = (SELECT USER_GROUP_ID FROM USER UU WHERE UU.USER_ID = SS.SENDER_ID)) AS S_GROUP_NM ,
+				SS.SENDER_MBTLNUM, 
+				SS.RECEIVER_ID, 
+				(
+					CASE WHEN (SELECT USER_NM FROM USER UU WHERE UU.USER_ID = SS.RECEIVER_ID) IS NULL 
+						THEN
+							(SELECT STL.SMS_TRGTER_NM FROM SMS_TRGTER_LIST STL WHERE STL.SMS_TRGTER_ID = SS.RECEIVER_ID)
+						ELSE 
+							(SELECT USER_NM FROM USER UU WHERE UU.USER_ID = SS.RECEIVER_ID)
+					END
+				) AS RECEIVER_NM ,
+				(
+					CASE WHEN (SELECT USER_GROUP_NM FROM USER_GROUP UG WHERE UG.USER_GROUP_ID = (SELECT USER_GROUP_ID FROM USER UU WHERE UU.USER_ID = SS.RECEIVER_ID)) IS NULL 
+						THEN
+							(SELECT STL.SMS_TRGTER_PSITN FROM SMS_TRGTER_LIST STL WHERE STL.SMS_TRGTER_ID = SS.RECEIVER_ID)
+						ELSE 
+							(SELECT USER_GROUP_NM FROM USER_GROUP UG WHERE UG.USER_GROUP_ID = (SELECT USER_GROUP_ID FROM USER UU WHERE UU.USER_ID = SS.RECEIVER_ID))
+					END
+				) AS R_GROUP_NM ,
+				SS.RECEIVER_MBTLNUM, 
+				SS.TRNSMIS_DT, 
+				SS.TRNSMIS_MESSAGE 
+			FROM SMS_SNDNG_HIST SS
+		) VV
+		WHERE 1=1
+		<if test="sender != null and sender != ''">
+		  AND (VV.SENDER_NM LIKE CONCAT('%',#{sender},'%') OR VV.SENDER_MBTLNUM LIKE CONCAT('%',#{sender},'%'))
+		</if>
+		<if test="receiver != null and receiver != ''">
+		  AND (VV.RECEIVER_NM LIKE CONCAT('%',#{receiver},'%') OR VV.RECEIVER_MBTLNUM LIKE CONCAT('%',#{receiver},'%'))
+		</if>
+		<if test="msg != null and msg != ''">
+		  AND VV.TRNSMIS_MESSAGE LIKE CONCAT('%',#{msg},'%')
+		</if>
+		
+		<if test="startDateTime != null and startDateTime != '' and endDateTime != null and endDateTime != ''">
+		  AND VV.TRNSMIS_DT BETWEEN STR_TO_DATE(#{startDateTime} , '%Y%m%d%H%i') AND STR_TO_DATE(#{endDateTime} , '%Y%m%d%H%i')
+		</if>
+		AND VV.SENDER_ID = #{senderId}
+		ORDER BY VV.SMS_TRNSMIS_SN DESC
+    </select>
+    
+    
+    <select id="getTargetSmsList" resultType="kr.co.n3n.smartcity.model.CommMap">  
+	    SELECT 
+			U.USER_ID AS USER_ID ,
+			U.USER_NM AS USER_NM ,
+			(SELECT USER_GROUP_NM FROM USER_GROUP UR WHERE UR.USER_GROUP_ID = U.USER_GROUP_ID) AS USER_GROUP_NAME , 
+			U.MBTLNUM AS MBTLNUM ,
+			'U' AS TYPE_NAME
+		FROM USER U 
+		WHERE U.SMS_RECPTN_AT = 'Y' AND USE_AT = 'Y'
+		UNION
+		SELECT 
+			S.SMS_TRGTER_ID AS USER_ID ,
+			S.SMS_TRGTER_NM AS USER_NM ,
+			S.SMS_TRGTER_PSITN AS USER_GROUP_NAME ,
+			S.SMS_TRGTER_MBTLNUM AS MBTLNUM ,
+			'C' AS TYPE_NAME
+		FROM SMS_TRGTER_LIST S
+		WHERE S.SMS_TRGTER_ID NOT IN (SELECT USER_ID FROM USER)
+    </select>
+    
+    
+    <insert id="insertSmsTargetUser">
+    	INSERT INTO SMS_TRGTER_LIST (
+			SMS_TRGTER_ID , SMS_TRGTER_MBTLNUM , SMS_TRGTER_NM , SMS_TRGTER_PSITN , REGISTER_ID , REGISTER_DT
+		)
+		VALUES (
+			#{add_id} , #{cp_num} , #{add_nm} , #{add_psitn} , #{regId} , NOW()
+		)
+    </insert>
+    
+    
+    <update id="deleteSmsTargetUserTable">
+    	UPDATE USER
+		SET
+			SMS_RECPTN_AT = 'N'
+		WHERE USER_ID = #{uId}
+    </update>
+    
+    
+    <delete id="deleteSmsTargetTargetTable">
+    	DELETE FROM SMS_TRGTER_LIST WHERE SMS_TRGTER_ID = #{uId}
+    </delete>
+    
+    
+    <insert id="insertTmpSms">
+		INSERT INTO  SMS_MESSAGE_TMPR_STRE (
+			SENDER_ID , TRNSMIS_MESSAGE
+		)
+		VALUES (
+			#{regId} , #{tmpMsg}
+		)
+    </insert>
+    
+    
+    <insert id="updateTmpSms">
+		UPDATE  SMS_MESSAGE_TMPR_STRE
+			SET TRNSMIS_MESSAGE = #{tmpMsg}
+		WHERE SENDER_ID = #{regId}
+    </insert>
+    
+    
+    <select id="getSavedTmpSmsCnt" resultType="kr.co.n3n.smartcity.model.CommMap">  
+	    SELECT COUNT(*) AS CNT FROM SMS_MESSAGE_TMPR_STRE WHERE SENDER_ID = #{regId}
+    </select>
+    
+    
+    <select id="getSmsId" resultType="kr.co.n3n.smartcity.model.CommMap">  
+	    SELECT COUNT(*) AS CNT FROM SMS_MESSAGE_TMPR_STRE WHERE SENDER_ID = #{regId}
+    </select>
+    
+    
+    <select id="getTmpSms" resultType="kr.co.n3n.smartcity.model.CommMap">  
+	    SELECT TRNSMIS_MESSAGE FROM SMS_MESSAGE_TMPR_STRE WHERE SENDER_ID = #{regId}
+    </select>
+    
+    <select id="getTmpMsg" resultType="kr.co.n3n.smartcity.model.CommMap">  
+	    SELECT SMTS_SEQ , SENDER_ID , TRNSMIS_MESSAGE FROM SMS_MESSAGE_TMPR_STRE WHERE SENDER_ID = #{regId} ORDER BY REGISTER_DT DESC
+    </select>
+    
+    <insert id="insertSms">
+    	<selectKey resultType="int" keyProperty="smsId" order="BEFORE">
+        	SELECT IFNULL(MAX(SMS_TRNSMIS_SN) +1,1) FROM SMS_SNDNG_HIST
+    	</selectKey>   
+    	INSERT INTO SMS_SNDNG_HIST (
+			SMS_TRNSMIS_SN , 
+			SENDER_ID , SENDER_MBTLNUM ,
+			RECEIVER_ID , RECEIVER_MBTLNUM ,
+			TRNSMIS_DT , TRNSMIS_MESSAGE ,
+			SEND_AT ,
+			EVENT_CODE_GROUP_ID , EVENT_CODE_ID , EVENT_NO 
+		)
+		VALUES (
+			#{smsId} ,
+			#{regId} , #{regMbtl} ,
+			#{trgId} , #{trgMtb} ,
+			NOW() , #{msg} ,
+			'N' ,
+			'EV02' , #{evt_cd} , #{evt_no}
+		)
+    </insert>
+    
+    
+    <delete id="deleteMsg">       
+    	DELETE FROM SMS_MESSAGE_TMPR_STRE 
+		WHERE SMTS_SEQ = #{seq}
+    </delete>
+    
+    
+    <select id="checkId" resultType="kr.co.n3n.smartcity.model.CommMap">  
+	    SELECT IFNULL(COUNT(*),1) AS RESULT
+		FROM SMS_TRGTER_LIST
+		WHERE SMS_TRGTER_ID = #{idVal}
+    </select>
+    
+    
+</mapper>

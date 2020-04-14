@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="rss">
+    
+    
+    
+    <select id="rssAdsMngListPage" resultType="kr.co.n3n.smartcity.model.CommMap">        
+		
+		SELECT 
+			RSS_SEQ ,
+			ENTITY_NAME ,
+			ENTITY_NAME AS E_NM ,
+			ADDRESS ,
+			REGISTER_ID ,
+			REGISTER_DT ,
+			LAST_UPDUSR_ID ,
+			LAST_UPDT_DT
+		FROM  RSS_ADDRESS_MANAGEMENT  
+		WHERE 1=1
+		
+		<if test="entityName != null and entityName != ''">
+		  AND ENTITY_NAME LIKE CONCAT('%' , #{entityName} , '%')
+		</if>
+		
+		ORDER BY REGISTER_DT DESC
+		<if test="startNum != null and startNum != ''">
+			LIMIT #{startNum}, #{pageCnt}
+		</if>
+
+    </select>
+    
+     
+    
+    <select id="rssAdsMngListPageCnt" resultType="kr.co.n3n.smartcity.model.CommMap"> 
+    	
+    	SELECT 
+			COUNT(*) AS TOTAL_COUNT
+		FROM  RSS_ADDRESS_MANAGEMENT  
+		WHERE 1=1
+		
+		<if test="entityName != null and entityName != ''">
+		  AND ENTITY_NAME LIKE CONCAT('%' , #{entityName} , '%')
+		</if>
+		  
+    </select>
+    
+    
+    
+    <insert id="insertRssAdsMng">
+    	INSERT INTO RSS_ADDRESS_MANAGEMENT (
+			ENTITY_NAME ,
+			ADDRESS ,
+			REGISTER_ID ,
+			REGISTER_DT ,
+			LAST_UPDUSR_ID ,
+			LAST_UPDT_DT
+		)
+		VALUES (
+			#{entityName},
+			#{address},
+			#{regId},
+			NOW(),
+			#{regId},
+			NOW()
+		)
+    </insert>
+    
+    
+    
+    <delete id="deleteRssAdsMng">
+    	DELETE FROM RSS_ADDRESS_MANAGEMENT WHERE RSS_SEQ = #{num}
+    </delete>
+    
+    
+    <select id="selectRssAdsMngDetail" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT 
+			RSS_SEQ ,
+			ENTITY_NAME ,
+			ADDRESS ,
+			REGISTER_ID ,
+			REGISTER_DT ,
+			LAST_UPDUSR_ID ,
+			LAST_UPDT_DT
+		FROM  RSS_ADDRESS_MANAGEMENT  
+		WHERE RSS_SEQ = #{rssSeq}
+    </select>
+    
+    
+    <update id="updateRssAdsMng">
+    
+    	UPDATE RSS_ADDRESS_MANAGEMENT
+		SET
+			ENTITY_NAME = #{entityName} ,
+			ADDRESS = #{address} ,
+			
+			LAST_UPDUSR_ID = #{regId} ,
+			LAST_UPDT_DT = NOW()
+		WHERE RSS_SEQ = #{rssSeq}
+    
+    </update>
+    
+    
+</mapper>

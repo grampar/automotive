@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="role">
+	
+	<select id="getRoleList" resultType="kr.co.n3n.smartcity.model.CommMap">
+		SELECT
+			R.ROLE_ID
+			,R.ROLE_NM
+			,R.ROLE_DC
+			,R.SD_CODE_GROUP_ID
+			,R.SD_CODE_ID
+			,C1.CODE_NM AS SD_CODE_NM
+			,R.USE_AT
+			,C2.CODE_NM AS USE_NM
+		FROM ROLE R
+		LEFT JOIN CODE C1 ON C1.CODE_ID = R.SD_CODE_ID AND C1.CODE_GROUP_ID = R.SD_CODE_GROUP_ID
+		LEFT JOIN CODE C2 ON C2.CODE_ID = R.USE_AT AND C2.CODE_GROUP_ID = 'U001'
+		WHERE 1 = 1
+		<if test="keyword != null and keyword != ''">
+			AND (R.ROLE_ID LIKE CONCAT('%',#{keyword},'%') OR R.ROLE_NM LIKE CONCAT('%',#{keyword},'%') )
+		</if>
+		<if test="sdCodeId != null and sdCodeId != ''">
+			AND R.SD_CODE_ID = #{sdCodeId}
+		</if>
+		ORDER BY R.REGISTER_DT DESC
+		<if test="startNum != null and startNum != ''">
+			LIMIT #{startNum}, #{pageCnt}
+		</if>
+	</select>
+	
+	<select id="getRoleListCnt" resultType="kr.co.n3n.smartcity.model.CommMap">
+		SELECT
+			COUNT(*) AS TOTAL_COUNT
+		FROM ROLE R
+		LEFT JOIN CODE C1 ON C1.CODE_ID = R.SD_CODE_ID AND C1.CODE_GROUP_ID = R.SD_CODE_GROUP_ID
+		WHERE 1 = 1
+		<if test="keyword != null and keyword != ''">
+			AND (R.ROLE_ID LIKE CONCAT('%',#{keyword},'%') OR R.ROLE_NM LIKE CONCAT('%',#{keyword},'%') )
+		</if>
+		<if test="sdCodeId != null and sdCodeId != ''">
+			AND R.SD_CODE_ID = #{sdCodeId}
+		</if>
+	</select>
+	
+	<insert id="insertRole">
+		INSERT INTO ROLE(
+			ROLE_ID
+			,ROLE_NM
+			<if test="roleDc != null and roleDc != ''">,ROLE_DC</if>
+			<if test="sdCodeGroupId != null and sdCodeGroupId != ''">,SD_CODE_GROUP_ID</if>
+			<if test="sdCodeId != null and sdCodeId != ''">,SD_CODE_ID</if>
+			<if test="useAt != null and useAt != ''">,USE_AT</if>
+			,REGISTER_ID
+			,REGISTER_DT
+			,LAST_UPDUSR_ID
+			,LAST_UPDT_DT
+		)VALUES(
+			#{roleId}
+			,#{roleNm}
+			<if test="roleDc != null and roleDc != ''">,#{roleDc}</if>
+			<if test="sdCodeGroupId != null and sdCodeGroupId != ''">,#{sdCodeGroupId}</if>
+			<if test="sdCodeId != null and sdCodeId != ''">,#{sdCodeId}</if>
+			<if test="useAt != null and useAt != ''">,#{useAt}</if>
+			,#{registerId}
+			,NOW()
+			,#{registerId}
+			,NOW()
+		)
+	</insert>
+	
+	<update id="updateRole">
+		UPDATE ROLE
+		<set>
+			ROLE_NM = #{roleNm},
+			<if test="roleDc != null and roleDc != ''">ROLE_DC = #{roleDc},</if>
+			<if test="sdCodeGroupId != null and sdCodeGroupId != ''">SD_CODE_GROUP_ID = #{sdCodeGroupId},</if>
+			<if test="sdCodeId != null and sdCodeId != ''">SD_CODE_ID = #{sdCodeId},</if>
+			<if test="useAt != null and useAt != ''">USE_AT = #{useAt},</if>
+			LAST_UPDUSR_ID = #{registerId},
+			LAST_UPDT_DT = NOW()
+		</set>
+		WHERE ROLE_ID = #{roleId}
+	</update>
+	
+	<select id="selectUseRoleId" resultType="kr.co.n3n.smartcity.model.CommMap">
+		SELECT
+			ROLE_ID
+		FROM ROLE
+		WHERE ROLE_ID = #{roleId}
+	</select>
+	
+	<update id="deleteRole">
+		UPDATE ROLE
+		SET USE_AT = 'N'
+		WHERE ROLE_ID = #{roleId}
+	</update>
+</mapper>

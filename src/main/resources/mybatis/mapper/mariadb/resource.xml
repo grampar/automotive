@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="resource">
+	
+	<resultMap id="EventMap" type="kr.co.n3n.smartcity.model.CommMap" >
+    	<association property="COLUMN_LIST" column="{eventId = EVENT_ID,tableNm = EVENT_LINK_TABLE_NM}" select="selectColumns"/>
+    </resultMap>
+	
+	<select id="getEventList" resultMap="EventMap">
+		SELECT
+			E.EVENT_ID
+			,E.EVENT_CODE_GROUP_ID
+			,E.EVENT_CODE_ID
+			,CE.CODE_NM AS EVENT_CODE_NM
+			,E.EVENT_LINK_TABLE_NM
+			,E.EVENT_RECV_YN
+			,C1.CODE_NM AS EVENT_RECV_NM
+			,E.EPRSS_MG_BREADTH
+			,E.EPRSS_MG_HEIGHT
+			,E.INFO_INDICT_LC_X
+			,E.INFO_INDICT_LC_Y
+			,E.EPRSS_STDR
+			,E.SD_CODE_ID
+			,E.SD_GROUP_CODE_ID
+		FROM EVENT_EPRESS E
+		LEFT JOIN CODE CE ON CE.CODE_ID = E.EVENT_CODE_ID AND CE.CODE_GROUP_ID = E.EVENT_CODE_GROUP_ID
+		LEFT JOIN CODE C1 ON C1.CODE_ID = E.EVENT_RECV_YN AND C1.CODE_GROUP_ID = 'SY01'
+		WHERE 1 = 1
+		<if test="keyword != null and keyword != ''">
+			AND (E.EVENT_CODE_ID LIKE CONCAT('%',#{keyword},'%') OR CE.CODE_NM LIKE CONCAT('%',#{keyword},'%') )
+		</if>
+		ORDER BY E.REGISTER_DT DESC
+		<if test="startNum != null and startNum != ''">
+			LIMIT #{startNum}, #{pageCnt}
+		</if>
+	</select>
+	
+	<select id="selectColumns" resultType="kr.co.n3n.smartcity.model.CommMap">
+		SELECT
+			TC.EVENT_ID,
+			TC.COL_NAME,
+			T.COLUMN_COMMENT,
+			T.TABLE_NAME
+		FROM EVENT_TABLE_COL TC
+		LEFT JOIN (
+			SELECT 
+				TABLE_NAME
+				,COLUMN_NAME
+				,COLUMN_COMMENT
+			from INFORMATION_SCHEMA.COLUMNS 
+			WHERE TABLE_SCHEMA='smart_city' 
+			AND TABLE_NAME= #{tableNm}
+		) T ON T.COLUMN_NAME = TC.COL_NAME
+		WHERE TC.EVENT_ID = #{eventId}
+		ORDER BY TC.REGISTER_DT
+	</select>
+	
+	<select id="getEventListCnt" resultType="kr.co.n3n.smartcity.model.CommMap">
+		SELECT
+			COUNT(*) AS TOTAL_COUNT
+		FROM EVENT_EPRESS E
+		LEFT JOIN CODE CE ON CE.CODE_ID = E.EVENT_CODE_ID AND CE.CODE_GROUP_ID = E.EVENT_CODE_GROUP_ID
+		LEFT JOIN CODE C1 ON C1.CODE_ID = E.EVENT_RECV_YN AND C1.CODE_GROUP_ID = 'SY01'
+		WHERE 1 = 1
+		<if test="keyword != null and keyword != ''">
+			AND (E.EVENT_CODE_ID LIKE CONCAT('%',#{keyword},'%') OR CE.CODE_NM LIKE CONCAT('%',#{keyword},'%') )
+		</if>
+	</select>
+	
+	<select id="selectTableList" resultType="kr.co.n3n.smartcity.model.CommMap">
+		SELECT 
+			TABLE_NAME
+			,TABLE_COMMENT
+		FROM INFORMATION_SCHEMA.TABLES 
+		WHERE TABLE_SCHEMA = 'smart_city'
+		AND (TABLE_NAME LIKE 'eli%' OR TABLE_NAME LIKE 'if%')
+	</select>
+	
+	<select id="selectTableColumnList" resultType="kr.co.n3n.smartcity.model.CommMap">
+		SELECT 
+			TABLE_NAME
+			,COLUMN_NAME AS COL_NAME
+			,COLUMN_COMMENT
+		from INFORMATION_SCHEMA.COLUMNS 
+		WHERE TABLE_SCHEMA='smart_city' 
+		AND TABLE_NAME= #{tableNm}
+		ORDER BY ORDINAL_POSITION
+	</select>
+	
+	<insert id="insertEventEpress">
+		INSERT INTO EVENT_EPRESS(
+			EVENT_ID
+			<if test="eventCodeGroupId != null and eventCodeGroupId != ''">,EVENT_CODE_GROUP_ID</if>
+			<if test="eventCodeId      != null and eventCodeId      != ''">,EVENT_CODE_ID</if>
+			<if test="eventLinkTableNm != null and eventLinkTableNm != ''">,EVENT_LINK_TABLE_NM</if>
+			<if test="eventRecvYn      != null and eventRecvYn      != ''">,EVENT_RECV_YN</if>
+			<if test="eprssMgBreadth   != null and eprssMgBreadth   != ''">,EPRSS_MG_BREADTH</if>
+			<if test="eprssMgHeight    != null and eprssMgHeight    != ''">,EPRSS_MG_HEIGHT</if>
+			<if test="infoIndictLcX    != null and infoIndictLcX    != ''">,INFO_INDICT_LC_X</if>
+			<if test="infoIndictLcY    != null and infoIndictLcY    != ''">,INFO_INDICT_LC_Y</if>
+			<if test="eprssStdr        != null and eprssStdr        != ''">,EPRSS_STDR</if>
+			<if test="sdGroupCodeId != null and sdGroupCodeId != ''">,SD_GROUP_CODE_ID</if>
+			<if test="sdCodeId != null and sdCodeId != ''">,SD_CODE_ID</if>
+			,REGISTER_ID
+			,REGISTER_DT
+			,LAST_UPDUSR_ID
+			,LAST_UPDT_DT
+		)VALUES(
+			#{eventId}
+			<if test="eventCodeGroupId != null and eventCodeGroupId != ''">,#{eventCodeGroupId}</if>
+			<if test="eventCodeId      != null and eventCodeId      != ''">,#{eventCodeId}</if>
+			<if test="eventLinkTableNm != null and eventLinkTableNm != ''">,#{eventLinkTableNm}</if>
+			<if test="eventRecvYn      != null and eventRecvYn      != ''">,#{eventRecvYn}</if>
+			<if test="eprssMgBreadth   != null and eprssMgBreadth   != ''">,#{eprssMgBreadth}</if>
+			<if test="eprssMgHeight    != null and eprssMgHeight    != ''">,#{eprssMgHeight}</if>
+			<if test="infoIndictLcX    != null and infoIndictLcX    != ''">,#{infoIndictLcX}</if>
+			<if test="infoIndictLcY    != null and infoIndictLcY    != ''">,#{infoIndictLcY}</if>
+			<if test="eprssStdr        != null and eprssStdr        != ''">,#{eprssStdr}</if>
+			<if test="sdGroupCodeId != null and sdGroupCodeId != ''">,#{sdGroupCodeId}</if>
+			<if test="sdCodeId != null and sdCodeId != ''">,#{sdCodeId}</if>
+			,#{registerId}
+			,NOW()
+			,#{registerId}
+			,NOW()
+		)
+	</insert>
+	
+	<update id="updateEventEpress">
+		UPDATE EVENT_EPRESS
+		<set>
+			<if test="eventCodeGroupId != null and eventCodeGroupId != ''">EVENT_CODE_GROUP_ID  = #{eventCodeGroupId},</if> 
+			<if test="eventCodeId      != null and eventCodeId      != ''">EVENT_CODE_ID        = #{eventCodeId},</if>      
+			<if test="eventLinkTableNm != null and eventLinkTableNm != ''">EVENT_LINK_TABLE_NM  = #{eventLinkTableNm},</if> 
+			<if test="eventRecvYn      != null and eventRecvYn      != ''">EVENT_RECV_YN        = #{eventRecvYn},</if>      
+			<if test="eprssMgBreadth   != null and eprssMgBreadth   != ''">EPRSS_MG_BREADTH     = #{eprssMgBreadth},</if>   
+			<if test="eprssMgHeight    != null and eprssMgHeight    != ''">EPRSS_MG_HEIGHT      = #{eprssMgHeight},</if>    
+			<if test="infoIndictLcX    != null and infoIndictLcX    != ''">INFO_INDICT_LC_X     = #{infoIndictLcX},</if>    
+			<if test="infoIndictLcY    != null and infoIndictLcY    != ''">INFO_INDICT_LC_Y     = #{infoIndictLcY},</if>    
+			<if test="eprssStdr        != null and eprssStdr        != ''">EPRSS_STDR           = #{eprssStdr},</if>
+			<if test="sdGroupCodeId != null and sdGroupCodeId != ''">SD_GROUP_CODE_ID = #{sdGroupCodeId},</if>
+			<if test="sdCodeId != null and sdCodeId != ''">SD_CODE_ID = #{sdCodeId},</if>
+			LAST_UPDUSR_ID = #{registerId},
+			LAST_UPDT_DT = NOW()        
+		</set>
+		WHERE EVENT_ID = #{eventId}
+	</update>
+	
+	<insert id="insertEventCol">
+		INSERT INTO EVENT_TABLE_COL(
+			EVENT_ID
+			,COL_NAME
+			,COL_COMMENT
+			,REGISTER_ID
+			,REGISTER_DT
+		)VALUES(
+			#{eventId}
+			,#{colName}
+			,#{colComment}
+			,#{registerId}
+			,NOW()
+		)
+	</insert>
+	
+	<delete id="deleteEventCol">
+		DELETE FROM EVENT_TABLE_COL
+		WHERE EVENT_ID = #{eventId}
+	</delete>
+	
+	<select id="selectEventId" resultType="kr.co.n3n.smartcity.model.CommMap">
+		SELECT
+			EVENT_ID
+		FROM EVENT_EPRESS
+		WHERE EVENT_ID = #{eventId}
+	</select>
+	
+	<delete id="deleteEvent">
+		DELETE FROM EVENT_EPRESS
+		WHERE EVENT_ID = #{eventId}
+	</delete>
+</mapper>

@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="media">
+	
+	<select id="getMediaList" resultType="kr.co.n3n.smartcity.model.CommMap">
+		SELECT 
+			NAME
+			,LABEL
+			,DESCRIPTION
+			,IP
+			,PORT
+		FROM M_SERVER
+		WHERE 1 = 1
+		<if test="keyword != null and keyword != ''">
+			AND LABEL LIKE CONCAT('%',#{keyword},'%')
+		</if>
+		ORDER BY REGISTER_DT DESC
+		<if test="startNum != null and startNum != ''">
+			LIMIT #{startNum}, #{pageCnt}
+		</if>
+	</select>
+	
+	<select id="getMediaListCnt" resultType="kr.co.n3n.smartcity.model.CommMap">
+		SELECT 
+			COUNT(*) AS TOTAL_COUNT
+		FROM M_SERVER
+		WHERE 1 = 1
+		<if test="keyword != null and keyword != ''">
+			AND LABEL LIKE CONCAT('%',#{keyword},'%')
+		</if>
+		ORDER BY REGISTER_DT
+	</select>
+	
+	<insert id="insertMedia">
+		INSERT INTO M_SERVER(
+			NAME
+			,LABEL
+			<if test="description != null">,DESCRIPTION</if>
+			,IP
+			,PORT
+			,REGISTER_ID
+			,REGISTER_DT
+			,LAST_UPDUSR_ID
+			,LAST_UPDT_DT
+		)VALUES(
+			#{label}
+			,#{label}
+			<if test="description != null">,#{description}</if>
+			,#{ip}
+			,#{port}
+			,#{registerId}
+			,NOW()
+			,#{registerId}
+			,NOW()
+		)
+	</insert>
+	
+	<update id="updateMedia">
+		UPDATE M_SERVER
+		<set>
+			<if test="description != null">DESCRIPTION = #{description},</if>
+			IP = #{ip},
+			PORT = #{port},
+			LAST_UPDUSR_ID = #{registerId},
+			LAST_UPDT_DT = NOW()
+		</set>
+		WHERE NAME = #{name}
+	</update>
+	
+	<delete id="deleteMediaList">
+		DELETE FROM M_SERVER
+		WHERE NAME IN <foreach collection="mList" item="name" index="index" open="(" close=")" separator=",">
+			#{name}
+		</foreach>
+	</delete>
+	
+	<select id="selectMediaId" resultType="kr.co.n3n.smartcity.model.CommMap">
+		SELECT
+			NAME
+		FROM M_SERVER
+		WHERE NAME = #{label}
+	</select>
+	
+	<delete id="deleteMediaMapng">
+		DELETE FROM M_MAPNG
+		WHERE FACILITIES_ID = #{facilitiesId}
+	</delete>
+	
+	<delete id="deleteMediaMapngList">
+		DELETE FROM M_MAPNG
+		WHERE FACILITIES_ID IN <foreach collection="fcltsIdList" item="fclts" index="index" open="(" close=")" separator=",">
+			#{fclts}
+		</foreach>
+	</delete>
+	
+	<insert id="insertMediaMapng">
+		INSERT INTO M_MAPNG(
+			FACILITIES_ID
+			,NAME
+		)VALUES(
+			#{facilitiesId}
+			,#{mediaServer}
+		)
+	</insert>
+</mapper>

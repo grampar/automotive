@@ -1,0 +1,826 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="wizeyerest">
+  
+    <!--
+	EV01	119이벤트
+	EV02	사회적 약자 이벤트
+	EV03	112긴급출동
+	EV04	112 긴급영상
+	EV05	긴급재난(산불발생)
+	EV06	긴급재난(우량시)
+	EV07	긴급재난(고속도로특별상황)
+	EV08	긴급재난(기상정보 AWS)
+	EV09	긴급재난(동네 예보)
+	EV10	긴급재난(지진현황)
+	EV11	긴급재난(기상특보)
+	EV12	긴급재난(응급복구장비)
+	EV13	긴급재난(소방서)
+	EV14	긴급재난(시가지도록돌발상황)
+     -->
+     
+     <!--      
+     SS01	119
+	SS02	112
+	SS03	긴급재난
+	SS04	사회적약자
+      -->
+      
+      
+    <!-- 119 이벤트 history    -->
+    <sql id="event119">
+    	SELECT 
+			B.TRNSMIT_SYS,
+			B.PROGRS_SE_CODE, 			
+			C.CODE_NM PROGRS_NM, 			
+			B.OCCRRNC_LC_LA AS LA,
+			B.OCCRRNC_LC_LO AS LO,			 
+			B.OCCRRNC_LC_NM AS LOC, 
+			B.OCCUR_DT,
+			B.TRNSMIS_MAN_ID AS USER_ID,
+			'' ETC,
+			A.EVENT_CODE_ID
+		FROM EVENT_HIST A 
+		INNER JOIN  IF_119_URGENCY B ON A.EVENT_SITTN_SEQ =B.EVENT_SITTN_SEQ
+		INNER JOIN (SELECT CODE_ID, CODE_NM FROM CODE WHERE CODE_GROUP_ID='EV01' AND USE_AT='Y') C ON B.PROGRS_SE_CODE=C.CODE_ID
+		WHERE B.ECTCC_SE_CODE='10' /* 이벤트 전문 코드 119 */
+    </sql>
+    
+    <!-- 112 이벤트 history    -->
+    <sql id="event112">
+    	
+		SELECT 
+			B.TRNSMIT_SYS,
+			B.PROGRS_SE_CODE, 
+			C.CODE_NM PROGRS_NM, 	
+			B.INCDNT_SPOT_LC_LA AS LA,
+			B.INCDNT_SPOT_LC_LO AS LO,
+			B.INCDNT_SPOT_ALL_ADRES AS LOC,
+			B.INCDNT_OCCRRNC_DT AS OCCUR_DT,
+			B.USER_ID,
+			'' ETC,
+			A.EVENT_CODE_ID
+		FROM EVENT_HIST A 
+		INNER JOIN  IF_112_EMRGNCY_VIDO_SPORT B ON A.EVENT_SITTN_SEQ =B.EVENT_SITTN_SEQ
+		INNER JOIN (SELECT CODE_ID, CODE_NM FROM CODE WHERE CODE_GROUP_ID='EV01' AND USE_AT='Y') C ON B.PROGRS_SE_CODE=C.CODE_ID
+		WHERE B.ECTCC_SE_CODE='10' /* 이벤트 전문 코드112 */
+    </sql>
+    
+     <!-- 사회적 약자  이벤트 history    -->
+    <sql id="eventSocial">
+    	
+		SELECT 
+			B.TRNSMIT_SYS,
+			B.PROGRS_SE_CODE, 
+			'발생' PROGRS_NM, 	
+			B.INCDNT_SPOT_LC_LA AS LA,
+			B.INCDNT_SPOT_LC_LO AS LO,
+			B.INCDNT_SPOT_ALL_ADRES AS LOC,
+			B.OCCRRNC_DT AS OCCUR_DT,
+			B.TRNSMIS_MAN_ID AS USER_ID,
+			'' ETC,
+			A.EVENT_CODE_ID
+		FROM EVENT_HIST A 
+		INNER JOIN  IF_DSC_SUPPPORT B ON A.EVENT_SITTN_SEQ =B.EVENT_SITTN_SEQ
+		WHERE B.ECTCC_SE_CODE='10' /* 이벤트 전문 코드112 */
+    </sql>
+    
+    
+    <!-- 산불발생정보    -->
+    <sql id="eventEmgFoaForest">
+    	
+		SELECT 
+			'EMG' TRNSMIT_SYS,
+			'10' PROGRS_SE_CODE, 
+			'발생' PROGRS_NM, 	
+			POINT_X AS LA,
+			POINT_Y AS LO,
+			LOC,
+			RCV_YMDHM AS OCCUR_DT,
+			'' AS USER_ID,
+			'' AS ETC,
+			'EV05' EVENT_CODE_ID
+		FROM ELI_FOA_FOREST_MAP
+    </sql>
+    
+    <!-- 우량시단위    -->
+    <sql id="eventEmgHrfRfhr">
+    	SELECT 
+			'EMG' TRNSMIT_SYS,
+			'10' PROGRS_SE_CODE, 
+			'발생' PROGRS_NM, 	
+			POINT_X AS LA,
+			POINT_Y AS LO,
+			OBSVT_NM AS LOC,
+			OBSVT_YMDHM AS OCCUR_DT,	
+			'' USER_ID,
+			'' ETC,
+			'EV06' EVENT_CODE_ID	
+		FROM ELI_HRF_RFHR
+    </sql>
+    
+    <!-- 고속도로특별상황관리 -->
+    <sql id="eventEmgKhcAcc">
+    	SELECT 
+			'EMG' TRNSMIT_SYS,
+			'10' PROGRS_SE_CODE, 
+			'발생' PROGRS_NM, 	
+			POINT_X AS LA,
+			POINT_Y AS LO,
+			LOC,
+			YMDHM AS OCCUR_DT,	
+			'' USER_ID,
+			'' ETC,
+			'EV07' EVENT_CODE_ID	
+		FROM ELI_KHC_ACC
+    </sql>
+    
+    
+    <!-- 기상정보AWS -->
+    <sql id="eventEmgAws10M">
+    	SELECT 
+			'EMG' TRNSMIT_SYS,
+			'10' PROGRS_SE_CODE, 
+			'발생' PROGRS_NM, 	
+			POINT_X AS LA,
+			POINT_Y AS LO,
+			LOC,
+			OBSVT_YMDHM AS OCCUR_DT,	
+			'' USER_ID,
+			CONCAT(OBSVT_ADDR, '|' , AWS_LVL_TP, '|' , AWS_LVL, '|' , WIND, '|' , WS, '|' , TA, '|' , QTY_DAY) ETC,
+			'EV08' EVENT_CODE_ID	
+		FROM ELI_KMA_AWS_10M
+    </sql>
+    
+    <!-- 동네예보 -->
+    <sql id="eventEmgDfsShrt">
+    	
+		SELECT 
+			'EMG' TRNSMIT_SYS,
+			'10' PROGRS_SE_CODE, 
+			'발생' PROGRS_NM, 	
+			POINT_X AS LA,
+			POINT_Y AS LO,
+			LOC,
+			FC_YMDHM AS OCCUR_DT,	
+			'' USER_ID,
+			CONCAT(
+			RAIN_1, '|' , RAIN_2, '|' , RAIN_3, '|' , RAIN_4, '|' , RAIN_5, '|' , 
+			WAD_1, '|' , WAD_2, '|' , WAD_3, '|' , WAD_4, '|' , WAD_5, '|' , 
+			TEM_1, '|' , TEM_2, '|' , TEM_3, '|' , TEM_4, '|' , TEM_5, '|' , 
+			HUM_1, '|' , HUM_2, '|' , HUM_3, '|' , HUM_4, '|' , HUM_5, '|' 
+			) ETC,
+			'EV09' EVENT_CODE_ID
+		FROM ELI_KMA_DFS_SHRT
+    </sql>
+    
+    <!-- 지진현황  -->
+    <sql id="eventEmgKmaEarthInfm">
+    	SELECT 
+			'EMG' TRNSMIT_SYS,
+			'10' PROGRS_SE_CODE, 
+			'발생' PROGRS_NM, 	
+			POINT_X AS LA,
+			POINT_Y AS LO,
+			LOC,
+			OCR_YMDHMS AS OCCUR_DT,	
+			'' USER_ID,
+			CONCAT(
+				EARTH_INFM_SCLE, '|' , EARTH_INFM_NO_ORD, '|' , EARTH_INFM_NO_REF, '|' , 
+				EARTH_INFM_NO_REF, '|', EARTH_INFM_CD_STN) ETC,
+			'EV10' EVENT_CODE_ID
+		FROM ELI_KMA_EARTH_INFM		
+    </sql>
+    
+    <!-- 기상특보 -->
+    <sql id="eventEmgKmaInform">
+    	SELECT 
+			'EMG' TRNSMIT_SYS,
+			'10' PROGRS_SE_CODE, 
+			'발생' PROGRS_NM, 	
+			0 LA,
+			0 LO,
+			'' LOC,
+			KMA_YMDHMS AS OCCUR_DT,	
+			'' USER_ID,
+			CONCAT(
+				KMA_TITLE, '|' , KMA_STAT_CTNT, '|' , KMA_SECT_AREA, '|' , 
+				KMA_PW_VL, '|', KMA_CD_STN
+			) ETC,
+			'EV11' EVENT_CODE_ID
+		FROM ELI_KMA_INFORM		
+    </sql>
+    
+    <!-- 응급복구장비 -->
+    <sql id="eventEmgNemEmre">
+    	SELECT 
+			'EMG' TRNSMIT_SYS,
+			'10' PROGRS_SE_CODE, 
+			'발생' PROGRS_NM, 	
+			POINT_X AS LA,
+			POINT_Y AS LO,
+			AREA_NAME AS LOC,
+			RCV_YMD_HMS AS OCCUR_DT,	
+			'' USER_ID,
+			CONCAT(
+				EQUP_CD, '|' , EQUP_NAME, '|' , COMPANY, '|' , 
+				OWNER_NAME
+			) ETC,
+			'EV12' EVENT_CODE_ID
+		FROM ELI_NEM_EMRE		
+    </sql>
+    
+    <!-- 소방서 -->
+    <sql id="eventEmgNemFirs">
+    	SELECT 
+			'EMG' TRNSMIT_SYS,
+			'10' PROGRS_SE_CODE, 
+			'발생' PROGRS_NM, 	
+			0 LA,
+			0 LO,
+			AREA_ADDR AS LOC,
+			RCV_YMD_HMS AS OCCUR_DT,	
+			'' USER_ID,
+			CONCAT(
+				FIRS_ID, '|' , FIRS_NM, '|' , TEL, '|' , FAX) ETC,
+			'EV13' EVENT_CODE_ID
+		FROM ELI_NEM_FIRS	
+    </sql>
+    
+    <!-- 시가지도로돌발 상황정보 -->
+    <sql id="eventEmgRtsaOccurid">
+    	SELECT 
+			'EMG' TRNSMIT_SYS,
+			'10' PROGRS_SE_CODE, 
+			'발생' PROGRS_NM, 	
+			0 LA,
+			0 LO,
+			ROAD_NAME AS LOC,
+			MEASURE_TIME AS OCCUR_DT,	
+			'' USER_ID,
+			CONCAT(
+				STD_LINK_ID, '|' , TYPE_OTHER) ETC,
+			'EV14' EVENT_CODE_ID
+		FROM ELI_RTSA_OCCURID	
+    </sql>
+    
+    <select id="getAllEventHistory" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT * FROM
+    	(        
+			<include refid="event119" />
+			UNION ALL
+			<include refid="event112" />
+			UNION ALL
+			<include refid="eventSocial" />
+			UNION ALL
+			<include refid="eventEmgFoaForest" />
+			UNION ALL
+			<include refid="eventEmgHrfRfhr" />
+			UNION ALL
+			<include refid="eventEmgKhcAcc" />
+			UNION ALL
+			<include refid="eventEmgAws10M" />
+			UNION ALL
+			<include refid="eventEmgDfsShrt" />
+			UNION ALL
+			<include refid="eventEmgKmaEarthInfm" />
+			UNION ALL
+			<include refid="eventEmgKmaInform" />	
+			UNION ALL
+			<include refid="eventEmgNemEmre" />
+			UNION ALL
+			<include refid="eventEmgNemFirs" />
+			UNION ALL
+			<include refid="eventEmgRtsaOccurid" />	
+		) A ORDER BY OCCUR_DT DESC	
+			
+    </select>
+    
+    <select id="get119EventHistory" resultType="kr.co.n3n.smartcity.model.CommMap">        
+		SELECT * FROM
+    	(   
+			<include refid="event119" />
+		) A ORDER BY OCCUR_DT DESC
+    </select>
+    
+    
+    <select id="getSocialEventHistory" resultType="kr.co.n3n.smartcity.model.CommMap">        
+		SELECT * FROM
+    	( 
+			<include refid="eventSocial" />
+		) A ORDER BY OCCUR_DT DESC
+    </select>
+    
+    <select id="get112EventHistory" resultType="kr.co.n3n.smartcity.model.CommMap">        
+		SELECT * FROM
+    	( 
+			<include refid="event112" />
+		) A ORDER BY OCCUR_DT DESC
+    </select>
+    
+    
+    <select id="getEmgEventHistory" resultType="kr.co.n3n.smartcity.model.CommMap">   
+    	SELECT * FROM
+    	(      
+			<include refid="eventEmgFoaForest" />
+			UNION ALL
+			<include refid="eventEmgHrfRfhr" />
+			UNION ALL
+			<include refid="eventEmgKhcAcc" />
+			UNION ALL
+			<include refid="eventEmgAws10M" />
+			UNION ALL
+			<include refid="eventEmgDfsShrt" />
+			UNION ALL
+			<include refid="eventEmgKmaEarthInfm" />
+			UNION ALL
+			<include refid="eventEmgKmaInform" />	
+			UNION ALL
+			<include refid="eventEmgNemEmre" />
+			UNION ALL
+			<include refid="eventEmgNemFirs" />
+			UNION ALL
+			<include refid="eventEmgRtsaOccurid" />	
+		) A ORDER BY OCCUR_DT DESC
+		
+    </select>
+    
+    
+    <select id="getEventExpress" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT 
+			EVENT_CODE_ID, 
+			EVENT_NM,
+			EVENT_RECV_YN,
+			EPRSS_MG_BREADTH,
+			EPRSS_MG_HEIGHT,
+			INFO_INDICT_LC_X,
+			INFO_INDICT_LC_Y
+		FROM EVENT_EPRESS
+		where EVENT_ID=#{EVENT_ID}		
+    </select>
+    
+    <select id="getEventCodeIcon" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT 
+    		ICON 
+		FROM CODE 
+		WHERE CODE_GROUP_ID=#{CODE_GROUP_ID}
+		AND CODE_ID=#{CODE_ID}
+    </select>
+    
+    <select id="getDynamicSql" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	${SQL}
+    </select>
+    
+    
+    <select id="getEventTableCol" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT 
+    		COL_NAME,
+    		COL_COMMENT 
+    	FROM EVENT_TABLE_COL
+    	WHERE EVENT_ID=#{EVENT_ID}
+    </select>
+    
+    <select id="getTableComment" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT  
+			COLUMN_NAME AS COL_NAME, 
+			COLUMN_COMMENT AS COL_COMMENT
+		FROM INFORMATION_SCHEMA.COLUMNS
+		WHERE TABLE_SCHEMA='smart_city'  
+		AND TABLE_NAME=#{TABLE_NAME}
+    </select>
+    
+    
+    <!-- 각 이벤트별 카운트 수 조회    -->
+    <select id="getEventHistoryCnt" resultType="kr.co.n3n.smartcity.model.CommMap">        
+		 
+		SELECT 
+			CNT_119, 
+			CNT_112
+		FROM
+		(
+			SELECT 
+					COUNT(DISTINCT TRNSMIT_NO) CNT_119
+				FROM IF_119_URGENCY_MASTER 
+				WHERE PROGRS_SE_CODE NOT IN ('90','91')
+				AND OCCUR_DT BETWEEN DATE_FORMAT(date_add(now(), interval -1 day), '%Y%m%d%H%i%s')  AND DATE_FORMAT(NOW(), '%Y%m%d%H%i%s')  
+		) A
+		,
+		(
+			SELECT 
+					COUNT(DISTINCT INCDNT_NO) CNT_112
+				FROM IF_112_EMRGNCY_VIDO_SPORT_MASTER 
+				WHERE PROGRS_SE_CODE NOT IN ('90','91')
+				AND INCDNT_OCCRRNC_DT BETWEEN DATE_FORMAT(date_add(now(), interval -1 day), '%Y%m%d%H%i%s')  AND DATE_FORMAT(NOW(), '%Y%m%d%H%i%s')  
+		) B
+    </select>
+    
+    
+    
+   
+    <select id="getUserRole" resultType="kr.co.n3n.smartcity.model.CommMap">        
+		SELECT
+			B.ROLE_ID,
+			C.ROLE_NM 
+		FROM USER A
+		INNER JOIN USER_ROLE_MAPNG B ON A.USER_ID=B.USER_ID
+		INNER JOIN ROLE C ON B.ROLE_ID=C.ROLE_ID
+		WHERE A.USER_ID=#{USER_ID}    	
+    </select>
+    
+    <select id="getUserInfo" resultType="kr.co.n3n.smartcity.model.CommMap">        
+		SELECT 
+			USER_NM, 
+			USER_GROUP_ID,
+			USE_AT
+		FROM USER 
+		WHERE USER_ID=#{USER_ID}    	
+    </select>
+    
+   
+   
+    <!-- login 이력 등록 -->
+    <insert id="insertLogHist">
+    	INSERT INTO LOG_HIST
+		(
+			USER_ID,			
+			GROUP_ID,
+			ROLE_ID,			
+			CONECT_DT,
+			USER_IP
+		)
+		VALUES
+		(
+			#{USER_ID},			
+			#{GROUP_ID},
+			#{ROLE_ID},			
+			now(),
+			#{USER_IP}
+		)
+    </insert>
+    
+    
+    
+    
+    
+	<!-- 이벤트 일별 통계  -->
+    <select id="getEventDayStatics" resultType="kr.co.n3n.smartcity.model.CommMap">        
+		  			
+			select 
+				T1.YMD, 
+				IFNULL(T2.CNT_119, 0) CNT_119, 
+				IFNULL(T3.CNT_112, 0) CNT_112,
+				IFNULL(T4.CNT_SOCIAL, 0) CNT_SOCIAL,
+				IFNULL(CNT_EMG, 0) CNT_EMG	
+			from
+			(
+				
+				select DATE_FORMAT(date_add(now(), interval -6 day), '%Y%m%d') YMD union all
+				select DATE_FORMAT(date_add(now(), interval -5 day), '%Y%m%d') YMD union all
+				select DATE_FORMAT(date_add(now(), interval -4 day), '%Y%m%d') YMD union all
+				select DATE_FORMAT(date_add(now(), interval -3 day), '%Y%m%d') YMD union all
+				select DATE_FORMAT(date_add(now(), interval -2 day), '%Y%m%d') YMD union all
+				select DATE_FORMAT(date_add(now(), interval -1 day), '%Y%m%d') YMD union all
+				select DATE_FORMAT(now(), '%Y%m%d') YMD 
+			) T1 
+			left outer join
+			(
+				SELECT 
+					DATE_FORMAT(OCCUR_DT, '%Y%m%d') YMD
+					, COUNT(1)  CNT_119
+					FROM IF_119_URGENCY_MASTER B 		
+					WHERE ECTCC_SE_CODE='10' /* 재난일 경우만 */					
+					AND OCCUR_DT BETWEEN concat(DATE_FORMAT(date_add(now(), interval -6 day), '%Y%m%d'), '000000')
+					AND concat(DATE_FORMAT(now(), '%Y%m%d'), '235959')
+					group by  DATE_FORMAT(OCCUR_DT, '%Y%m%d')
+			) T2 on T1.YMD=T2.YMD
+			left outer join
+			(
+				SELECT 
+					DATE_FORMAT(INCDNT_OCCRRNC_DT, '%Y%m%d') YMD
+					, COUNT(1)  CNT_112
+					FROM IF_112_EMRGNCY_VIDO_SPORT_MASTER B 		
+					WHERE ECTCC_SE_CODE='10' /* 재난일 경우만 */					
+					AND INCDNT_OCCRRNC_DT BETWEEN concat(DATE_FORMAT(date_add(now(), interval -6 day), '%Y%m%d'), '000000')
+					AND concat(DATE_FORMAT(now(), '%Y%m%d'), '235959')
+					group by  DATE_FORMAT(INCDNT_OCCRRNC_DT, '%Y%m%d')
+			) T3 on T1.YMD=T3.YMD
+			left outer join
+			(
+				SELECT 
+					DATE_FORMAT(OCCRRNC_DT, '%Y%m%d') YMD
+					, COUNT(1)  CNT_SOCIAL
+					FROM IF_DSC_SUPPPORT_MASTER B 		
+					WHERE ECTCC_SE_CODE='10' /* 재난일 경우만 */					
+					AND OCCRRNC_DT BETWEEN concat(DATE_FORMAT(date_add(now(), interval -6 day), '%Y%m%d'), '000000')
+					AND concat(DATE_FORMAT(now(), '%Y%m%d'), '235959')
+					group by  DATE_FORMAT(OCCRRNC_DT, '%Y%m%d')
+			) T4 on T1.YMD=T4.YMD
+			left outer join
+			(
+				SELECT YMD, SUM(CNT) CNT_EMG
+				FROM
+				(
+					/* 산불발생 정보 */
+					SELECT 
+					DATE_FORMAT(CONCAT(RCV_YMDHM,'00'), '%Y%m%d') YMD
+					, COUNT(1)  CNT
+					FROM ELI_FOA_FOREST_MAP 	
+					WHERE CONCAT(RCV_YMDHM, '00') BETWEEN concat(DATE_FORMAT(date_add(now(), interval -6 day), '%Y%m%d'), '000000')
+					AND concat(DATE_FORMAT(now(), '%Y%m%d'), '235959')
+					group by  DATE_FORMAT(CONCAT(RCV_YMDHM,'00'), '%Y%m%d')
+					
+					UNION ALL
+					
+					/* 우량시단위 */
+					SELECT 
+					DATE_FORMAT(CONCAT(OBSVT_YMDHM, '00'), '%Y%m%d') YMD
+					, COUNT(1)  CNT
+					FROM ELI_HRF_RFHR 	
+					WHERE CONCAT(OBSVT_YMDHM, '00') BETWEEN concat(DATE_FORMAT(date_add(now(), interval -6 day), '%Y%m%d'), '000000')
+					AND concat(DATE_FORMAT(now(), '%Y%m%d'), '235959')
+					group by  DATE_FORMAT(CONCAT(OBSVT_YMDHM, '00'), '%Y%m%d')
+					
+					UNION ALL
+					
+					/* 고속도로특별상황관리 */
+					SELECT 
+					DATE_FORMAT(CONCAT(YMDHM, '00'), '%Y%m%d') YMD
+					, COUNT(1)  CNT
+					FROM ELI_KHC_ACC 	
+					WHERE CONCAT(YMDHM, '00') BETWEEN concat(DATE_FORMAT(date_add(now(), interval -6 day), '%Y%m%d'), '000000')
+					AND concat(DATE_FORMAT(now(), '%Y%m%d'), '235959')
+					group by  DATE_FORMAT(CONCAT(YMDHM, '00'), '%Y%m%d')
+					
+					UNION ALL
+					
+					/* 기상정보AWS */
+					SELECT 
+					DATE_FORMAT(CONCAT(OBSVT_YMDHM, '00'), '%Y%m%d') YMD
+					, COUNT(1)  CNT
+					FROM ELI_KMA_AWS_10M 	
+					WHERE CONCAT(OBSVT_YMDHM, '00') BETWEEN concat(DATE_FORMAT(date_add(now(), interval -6 day), '%Y%m%d'), '000000')
+					AND concat(DATE_FORMAT(now(), '%Y%m%d'), '235959')
+					group by  DATE_FORMAT(CONCAT(OBSVT_YMDHM, '00'), '%Y%m%d')
+					
+					UNION ALL
+					
+					/* 동네예보 */
+					SELECT 
+					DATE_FORMAT(CONCAT(FC_YMDHM, '00'), '%Y%m%d') YMD
+					, COUNT(1)  CNT
+					FROM ELI_KMA_DFS_SHRT 	
+					WHERE CONCAT(FC_YMDHM, '00') BETWEEN concat(DATE_FORMAT(date_add(now(), interval -6 day), '%Y%m%d'), '000000')
+					AND concat(DATE_FORMAT(now(), '%Y%m%d'), '235959')
+					group by  DATE_FORMAT(CONCAT(FC_YMDHM, '00'), '%Y%m%d')
+					
+					UNION ALL
+					
+					/* 지진현황 */
+					SELECT 
+					DATE_FORMAT(OCR_YMDHMS, '%Y%m%d') YMD
+					, COUNT(1)  CNT
+					FROM ELI_KMA_EARTH_INFM 	
+					WHERE CONCAT(OCR_YMDHMS, '00') BETWEEN concat(DATE_FORMAT(date_add(now(), interval -6 day), '%Y%m%d'), '000000')
+					AND concat(DATE_FORMAT(now(), '%Y%m%d'), '235959')
+					group by  DATE_FORMAT(OCR_YMDHMS, '%Y%m%d')
+					
+					UNION ALL
+					
+					/* 기상특보 */
+					SELECT 
+					DATE_FORMAT(KMA_YMDHMS, '%Y%m%d') YMD
+					, COUNT(1)  CNT
+					FROM ELI_KMA_INFORM 	
+					WHERE KMA_YMDHMS BETWEEN concat(DATE_FORMAT(date_add(now(), interval -6 day), '%Y%m%d'), '000000')
+					AND concat(DATE_FORMAT(now(), '%Y%m%d'), '235959')
+					group by  DATE_FORMAT(KMA_YMDHMS, '%Y%m%d')
+					
+					UNION ALL
+					
+					/* 응급복구장비 */
+					SELECT 
+					DATE_FORMAT(RCV_YMD_HMS, '%Y%m%d') YMD
+					, COUNT(1)  CNT
+					FROM ELI_NEM_EMRE 	
+					WHERE CONCAT(RCV_YMD_HMS, '00') BETWEEN concat(DATE_FORMAT(date_add(now(), interval -6 day), '%Y%m%d'), '000000')
+					AND concat(DATE_FORMAT(now(), '%Y%m%d'), '235959')
+					group by  DATE_FORMAT(RCV_YMD_HMS, '%Y%m%d')
+					
+					UNION ALL
+					
+					/* 소방서 */
+					SELECT 
+					DATE_FORMAT(RCV_YMD_HMS, '%Y%m%d') YMD
+					, COUNT(1)  CNT
+					FROM ELI_NEM_FIRS 	
+					WHERE RCV_YMD_HMS BETWEEN concat(DATE_FORMAT(date_add(now(), interval -6 day), '%Y%m%d'), '000000')
+					AND concat(DATE_FORMAT(now(), '%Y%m%d'), '235959')
+					group by  DATE_FORMAT(RCV_YMD_HMS, '%Y%m%d')
+					
+					UNION ALL
+					
+					/* 시가지도로돌발 상황정보 */
+					SELECT 
+					DATE_FORMAT(MEASURE_TIME, '%Y%m%d') YMD
+					, COUNT(1)  CNT
+					FROM ELI_RTSA_OCCURID 	
+					WHERE MEASURE_TIME BETWEEN concat(DATE_FORMAT(date_add(now(), interval -6 day), '%Y%m%d'), '000000')
+					AND concat(DATE_FORMAT(now(), '%Y%m%d'), '235959')
+					group by  DATE_FORMAT(MEASURE_TIME, '%Y%m%d')
+					
+				) TT1 GROUP BY YMD
+					
+			) T5 on T1.YMD=T5.YMD
+    </select>
+    
+    
+    
+    <!-- 이벤트 월별 통계  -->
+    <select id="getEventMonthStatics" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	    
+		select 
+			T1.YM AS YMD, 
+			IFNULL(CNT_119, 0) CNT_119,
+			IFNULL(CNT_112, 0) CNT_112,
+			IFNULL(CNT_SOCIAL, 0) CNT_SOCIAL,
+			IFNULL(CNT_EMG, 0) CNT_EMG	
+			
+		from
+		(
+			
+				select DATE_FORMAT(date_add(now(), interval -5 month),'%Y%m') YM union all
+				select DATE_FORMAT(date_add(now(), interval -4 month),'%Y%m') YM union all
+				select DATE_FORMAT(date_add(now(), interval -3 month),'%Y%m') YM union all
+				select DATE_FORMAT(date_add(now(), interval -2 month),'%Y%m') YM union all
+				select DATE_FORMAT(date_add(now(), interval -1 month),'%Y%m') YM union all
+				select DATE_FORMAT(now(),'%Y%m') YM 
+		) T1 
+		left outer join
+		(
+			
+			SELECT 
+				DATE_FORMAT(OCCUR_DT, '%Y%m') YM
+				, COUNT(1)  CNT_119
+				FROM IF_119_URGENCY_MASTER B 		
+				WHERE ECTCC_SE_CODE='10' /* 재난일 경우만 */
+				AND OCCUR_DT BETWEEN concat(DATE_FORMAT(date_add(now(), interval -5 month),'%Y%m'), '01000000')
+				AND concat(DATE_FORMAT(LAST_DAY(now()),'%Y%m%d'), '235959')
+				group by  DATE_FORMAT(OCCUR_DT, '%Y%m')
+		) T2 on T1.YM=T2.YM
+		left outer join
+		(	
+			SELECT 
+				DATE_FORMAT(INCDNT_OCCRRNC_DT, '%Y%m') YM
+				, COUNT(1)  CNT_112
+				FROM IF_112_EMRGNCY_VIDO_SPORT_MASTER B 		
+				WHERE ECTCC_SE_CODE='10' /* 재난일 경우만 */				
+				AND INCDNT_OCCRRNC_DT BETWEEN concat(DATE_FORMAT(date_add(now(), interval -5 month),'%Y%m'), '01000000')
+				AND concat(DATE_FORMAT(LAST_DAY(now()),'%Y%m%d'), '235959')
+				group by  DATE_FORMAT(INCDNT_OCCRRNC_DT, '%Y%m')
+		) T3 on T1.YM=T3.YM
+		left outer join
+		(	
+			SELECT 
+				DATE_FORMAT(OCCRRNC_DT, '%Y%m') YM
+				, COUNT(1)  CNT_SOCIAL
+				FROM IF_DSC_SUPPPORT_MASTER B 		
+				WHERE ECTCC_SE_CODE='10' /* 재난일 경우만 */				
+				AND OCCRRNC_DT BETWEEN concat(DATE_FORMAT(date_add(now(), interval -5 month),'%Y%m'), '01000000')
+				AND concat(DATE_FORMAT(LAST_DAY(now()),'%Y%m%d'), '235959')
+				group by  DATE_FORMAT(OCCRRNC_DT, '%Y%m')
+		) T4 on T1.YM=T4.YM
+		
+		left outer join
+		(
+			SELECT YM, SUM(CNT) CNT_EMG
+			FROM
+			(
+				/* 산불발생 정보 */
+				SELECT 
+				DATE_FORMAT(CONCAT(RCV_YMDHM,'00'), '%Y%m') YM
+				, COUNT(1)  CNT
+				FROM ELI_FOA_FOREST_MAP 	
+				WHERE CONCAT(RCV_YMDHM, '00') BETWEEN concat(DATE_FORMAT(date_add(now(), interval -5 month),'%Y%m'), '01000000')
+				AND concat(DATE_FORMAT(LAST_DAY(now()),'%Y%m%d'), '235959')
+				group by  DATE_FORMAT(CONCAT(RCV_YMDHM,'00'), '%Y%m')
+				
+				UNION ALL
+				
+				/* 우량시단위 */
+				SELECT 
+				DATE_FORMAT(CONCAT(OBSVT_YMDHM, '00'), '%Y%m') YM
+				, COUNT(1)  CNT
+				FROM ELI_HRF_RFHR 	
+				WHERE CONCAT(OBSVT_YMDHM, '00') BETWEEN concat(DATE_FORMAT(date_add(now(), interval -5 month),'%Y%m'), '01000000')
+				AND concat(DATE_FORMAT(LAST_DAY(now()),'%Y%m%d'), '235959')
+				group by  DATE_FORMAT(CONCAT(OBSVT_YMDHM, '00'), '%Y%m')
+				
+				UNION ALL
+				
+				/* 고속도로특별상황관리 */
+				SELECT 
+				DATE_FORMAT(CONCAT(YMDHM, '00'), '%Y%m') YM
+				, COUNT(1)  CNT
+				FROM ELI_KHC_ACC 	
+				WHERE CONCAT(YMDHM, '00') BETWEEN concat(DATE_FORMAT(date_add(now(), interval -5 month),'%Y%m'), '01000000')
+				AND concat(DATE_FORMAT(LAST_DAY(now()),'%Y%m%d'), '235959')
+				group by  DATE_FORMAT(CONCAT(YMDHM, '00'), '%Y%m')
+				
+				UNION ALL
+				
+				/* 기상정보AWS */
+				SELECT 
+				DATE_FORMAT(CONCAT(OBSVT_YMDHM, '00'), '%Y%m') YM
+				, COUNT(1)  CNT
+				FROM ELI_KMA_AWS_10M 	
+				WHERE CONCAT(OBSVT_YMDHM, '00') BETWEEN concat(DATE_FORMAT(date_add(now(), interval -5 month),'%Y%m'), '01000000')
+				AND concat(DATE_FORMAT(LAST_DAY(now()),'%Y%m%d'), '235959')
+				group by  DATE_FORMAT(CONCAT(OBSVT_YMDHM, '00'), '%Y%m')
+				
+				UNION ALL
+				
+				/* 동네예보 */
+				SELECT 
+				DATE_FORMAT(CONCAT(FC_YMDHM, '00'), '%Y%m') YM
+				, COUNT(1)  CNT
+				FROM ELI_KMA_DFS_SHRT 	
+				WHERE CONCAT(FC_YMDHM, '00') BETWEEN concat(DATE_FORMAT(date_add(now(), interval -5 month),'%Y%m'), '01000000')
+				AND concat(DATE_FORMAT(LAST_DAY(now()),'%Y%m%d'), '235959')
+				group by  DATE_FORMAT(CONCAT(FC_YMDHM, '00'), '%Y%m')
+				
+				UNION ALL
+				
+				/* 지진현황 */
+				SELECT 
+				DATE_FORMAT(OCR_YMDHMS, '%Y%m') YM
+				, COUNT(1)  CNT
+				FROM ELI_KMA_EARTH_INFM 	
+				WHERE CONCAT(OCR_YMDHMS, '00') BETWEEN concat(DATE_FORMAT(date_add(now(), interval -5 month),'%Y%m'), '01000000')
+				AND concat(DATE_FORMAT(LAST_DAY(now()),'%Y%m%d'), '235959')
+				group by  DATE_FORMAT(OCR_YMDHMS, '%Y%m')
+				
+				UNION ALL
+				
+				/* 기상특보 */
+				SELECT 
+				DATE_FORMAT(KMA_YMDHMS, '%Y%m') YM
+				, COUNT(1)  CNT
+				FROM ELI_KMA_INFORM 	
+				WHERE KMA_YMDHMS BETWEEN concat(DATE_FORMAT(date_add(now(), interval -5 month),'%Y%m'), '01000000')
+				AND concat(DATE_FORMAT(LAST_DAY(now()),'%Y%m%d'), '235959')
+				group by  DATE_FORMAT(KMA_YMDHMS, '%Y%m')
+				
+				UNION ALL
+				
+				/* 응급복구장비 */
+				SELECT 
+				DATE_FORMAT(RCV_YMD_HMS, '%Y%m') YM
+				, COUNT(1)  CNT
+				FROM ELI_NEM_EMRE 	
+				WHERE CONCAT(RCV_YMD_HMS, '00') BETWEEN concat(DATE_FORMAT(date_add(now(), interval -5 month),'%Y%m'), '01000000')
+				AND concat(DATE_FORMAT(LAST_DAY(now()),'%Y%m%d'), '235959')
+				group by  DATE_FORMAT(RCV_YMD_HMS, '%Y%m')
+				
+				UNION ALL
+				
+				/* 소방서 */
+				SELECT 
+				DATE_FORMAT(RCV_YMD_HMS, '%Y%m') YM
+				, COUNT(1)  CNT
+				FROM ELI_NEM_FIRS 	
+				WHERE RCV_YMD_HMS BETWEEN concat(DATE_FORMAT(date_add(now(), interval -5 month),'%Y%m'), '01000000')
+				AND concat(DATE_FORMAT(LAST_DAY(now()),'%Y%m%d'), '235959')
+				group by  DATE_FORMAT(RCV_YMD_HMS, '%Y%m')
+				
+				UNION ALL
+				
+				/* 시가지도로돌발 상황정보 */
+				SELECT 
+				DATE_FORMAT(MEASURE_TIME, '%Y%m') YM
+				, COUNT(1)  CNT
+				FROM ELI_RTSA_OCCURID 	
+				WHERE MEASURE_TIME BETWEEN concat(DATE_FORMAT(date_add(now(), interval -5 month),'%Y%m'), '01000000')
+				AND concat(DATE_FORMAT(LAST_DAY(now()),'%Y%m%d'), '235959')
+				group by  DATE_FORMAT(MEASURE_TIME, '%Y%m')
+				
+			) TT1 GROUP BY YM
+				
+		) T5 on T1.YM=T5.YM
+    </select>
+	
+	 <!-- 이벤트 수신여부  -->
+    <select id="getEventRecv" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT 
+			COUNT(1) CNT,
+			(
+				SELECT EVENT_RECV_YN FROM EVENT_EPRESS WHERE EVENT_ID=#{EVENT_ID}
+			) EVT_RECV_YN
+		FROM USER A
+		JOIN USER_ROLE_MAPNG B ON A.USER_ID=B.USER_ID
+		JOIN ROLE C ON B.ROLE_ID=C.ROLE_ID
+		JOIN ROLE_EVENT_MAPNG D  ON  C.ROLE_ID=D.ROLE_ID
+		WHERE A.USER_ID=#{USER_ID}
+		AND D.EVENT_ID=#{EVENT_ID}
+    </select>
+	
+</mapper>

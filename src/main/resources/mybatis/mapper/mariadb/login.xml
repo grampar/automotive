@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="login">
+    
+    <select id="getUser" resultType="kr.co.n3n.smartcity.model.CommMap">        
+		SELECT 
+			USER_ID, USER_NM , MBTLNUM , EMAIL, GR_CODE_ID
+		FROM USER 
+		WHERE USER_ID=#{user_id}
+		AND USER_PASSWORD=#{user_pwd}		
+    </select>
+    
+    
+    <select id="getUserRole" resultType="kr.co.n3n.smartcity.model.CommMap">        
+		SELECT 
+			A.ROLE_ID, A.USER_ID, B.ROLE_NM 
+		FROM USER_ROLE_MAPNG A 
+		LEFT JOIN ROLE B ON A.ROLE_ID=B.ROLE_ID
+		AND USER_ID=#{user_id}				
+    </select>
+    
+    <select id="getUserNoPwd" resultType="kr.co.n3n.smartcity.model.CommMap">        
+		SELECT 
+			USER_ID, USER_NM , MBTLNUM , EMAIL, GR_CODE_ID
+		FROM USER 
+		WHERE USER_ID=#{user_id}				
+    </select>
+    
+    <select id="selectRoleList" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT
+			DISTINCT EE.SD_CODE_ID
+		FROM USER U
+		LEFT JOIN USER_ROLE_MAPNG UM ON U.USER_ID = UM.USER_ID
+		LEFT JOIN ROLE R ON R.ROLE_ID = UM.ROLE_ID
+		LEFT JOIN ROLE_EVENT_MAPNG EM ON R.ROLE_ID = EM.ROLE_ID
+		LEFT JOIN EVENT_EPRESS EE ON EM.EVENT_ID = EE.EVENT_ID
+		WHERE U.USER_ID = #{userId}
+    </select>
+</mapper>

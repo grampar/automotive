@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="auth">
+	
+	<select id="getEventMenuAll" resultType="kr.co.n3n.smartcity.model.CommMap">
+		SELECT 
+			E.EVENT_ID
+			,C1.CODE_NM AS EVENT_NM
+		FROM EVENT_EPRESS E
+		LEFT JOIN CODE C1 ON C1.CODE_GROUP_ID = E.EVENT_CODE_GROUP_ID AND C1.CODE_ID = E.EVENT_CODE_ID
+	</select>
+	
+	<select id="getResrceMapList" resultType="kr.co.n3n.smartcity.model.CommMap">
+		SELECT
+			ROLE_ID
+			,MENU_ID
+		FROM ROLE_RESRCE_MAPNG
+		WHERE 1 = 1
+		AND ROLE_ID = #{roleId}
+	</select>
+	
+	<select id="getRoleAllList" resultType="kr.co.n3n.smartcity.model.CommMap">
+		SELECT
+			ROLE_ID
+			,ROLE_NM
+		FROM ROLE
+		WHERE USE_AT = 'Y'
+		<choose>
+			<when test="session.grCodeId != 'RG03'">
+				AND SD_CODE_ID IN (
+					SELECT
+						DISTINCT EE.SD_CODE_ID
+					FROM USER U
+					LEFT JOIN USER_ROLE_MAPNG UM ON U.USER_ID = UM.USER_ID
+					LEFT JOIN ROLE R ON R.ROLE_ID = UM.ROLE_ID
+					LEFT JOIN ROLE_EVENT_MAPNG EM ON R.ROLE_ID = EM.ROLE_ID
+					LEFT JOIN EVENT_EPRESS EE ON EM.EVENT_ID = EE.EVENT_ID
+					WHERE U.USER_ID = #{session.userId}
+				)
+			</when>
+		</choose>
+	</select>
+	
+	<insert id="insertResrceMap">
+		INSERT INTO ROLE_RESRCE_MAPNG(
+			ROLE_ID
+			,MENU_ID
+			,REGISTER_ID
+			,REGISTER_DT
+			,LAST_UPDUSR_ID
+			,LAST_UPDT_DT
+		)VALUES(
+			#{roleId}
+			,#{menuId}
+			,#{registerId}
+			,NOW()
+			,#{registerId}
+			,NOW()
+		)
+	</insert>
+	
+	<delete id="deleteResrceMap">
+		DELETE FROM ROLE_RESRCE_MAPNG
+		WHERE ROLE_ID = #{roleId}
+	</delete>
+	
+	<select id="selectUserGroupListAll" resultType="kr.co.n3n.smartcity.model.CommMap">
+		SELECT
+			USER_GROUP_ID
+			,USER_GROUP_NM
+			,DEPTH
+			,ODER
+			,UPPER_GROUP_ID
+			,'G' AS TYPE
+			,'' AS USER_ID
+			,'' AS USER_NM
+			,'' AS OFFM_TELNO
+			,'' AS MBTLNUM
+			,'' AS EMAIL
+			,'' AS SMS_RECPTN_AT
+			,'' AS USE_AT
+			,'' AS GR_GROUP_CODE_ID
+			,'' AS GR_CODE_ID
+			,'' AS OBJECT_ID
+		FROM USER_GROUP
+		WHERE USE_AT = 'Y'
+		
+		UNION ALL
+		
+		SELECT
+			U.USER_ID AS USER_GROUP_ID
+			,U.USER_NM AS USER_GROUP_NM
+			,UG.DEPTH + 1 AS DEPTH
+			,UG.ODER
+			,U.USER_GROUP_ID AS UPPER_GROUP_ID
+			,'U' AS TYPE
+			,U.USER_ID
+			,U.USER_NM
+			,U.OFFM_TELNO
+			,U.MBTLNUM
+			,U.EMAIL
+			,U.SMS_RECPTN_AT
+			,U.USE_AT
+			,U.GR_GROUP_CODE_ID
+			,U.GR_CODE_ID
+			,U.OBJECT_ID
+		FROM USER U
+		LEFT JOIN USER_GROUP UG ON UG.USER_GROUP_ID = U.USER_GROUP_ID
+		WHERE U.USE_AT = 'Y'
+		
+		ORDER BY DEPTH,TYPE,ODER
+	</select>
+	
+	<select id="getRoleUserMapList" resultType="kr.co.n3n.smartcity.model.CommMap">
+		SELECT
+			USER_ID
+			,ROLE_ID
+		FROM USER_ROLE_MAPNG
+		WHERE ROLE_ID = #{roleId}
+	</select>
+	
+	<insert id="insertUserMapng">
+		INSERT INTO USER_ROLE_MAPNG(
+			USER_ID
+			,ROLE_ID
+			,REGISTER_ID
+			,REGISTER_DT
+			,LAST_UPDUSR_ID
+			,LAST_UPDT_DT
+		)VALUES(
+			#{userId}
+			,#{roleId}
+			,#{registerId}
+			,NOW()
+			,#{registerId}
+			,NOW()
+		)
+	</insert>
+	
+	<delete id="deleteUserMapng">
+		DELETE FROM USER_ROLE_MAPNG
+		WHERE ROLE_ID = #{roleId}
+	</delete>
+	
+	<select id="getEventMapList" resultType="kr.co.n3n.smartcity.model.CommMap">
+		SELECT
+			EM.EVENT_ID
+			,C1.CODE_NM AS EVENT_NM
+		FROM ROLE_EVENT_MAPNG EM
+		LEFT JOIN EVENT_EPRESS E ON E.EVENT_ID = EM.EVENT_ID
+		LEFT JOIN CODE C1 ON C1.CODE_GROUP_ID = E.EVENT_CODE_GROUP_ID AND C1.CODE_ID = E.EVENT_CODE_ID
+		WHERE ROLE_ID = #{roleId}
+	</select>
+	
+	<insert id="insertEventMap">
+		INSERT INTO ROLE_EVENT_MAPNG(
+			ROLE_ID
+			,EVENT_ID
+			,REGISTER_ID
+			,REGISTER_DT
+			,LAST_UPDUSR_ID
+			,LAST_UPDT_DT
+		)VALUES(
+			#{roleId}
+			,#{eventId}
+			,#{registerId}
+			,NOW()
+			,#{registerId}
+			,NOW()
+		)
+	</insert>
+	
+	<delete id="deleteEventMap">
+		DELETE FROM ROLE_EVENT_MAPNG
+		WHERE ROLE_ID = #{roleId}
+	</delete>
+	
+	
+</mapper>

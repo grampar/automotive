@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="bbs">
+
+
+	<select id="noticeListPage" resultType="kr.co.n3n.smartcity.model.CommMap">        
+		SELECT NOTICE_SEQ , TITLE , CONTENT , REGISTER_ID , REGISTER_NM , REGISTER_DT , LAST_UPDUSR_ID , LAST_UPDUSR_NM , LAST_UPDT_DT
+		FROM (
+			SELECT 
+				NOTICE_SEQ ,
+				TITLE ,
+				CONTENT ,
+				REGISTER_ID ,
+				(SELECT USER_NM FROM USER WHERE USER_ID = REGISTER_ID) AS REGISTER_NM ,
+				REGISTER_DT ,
+				LAST_UPDUSR_ID ,
+				(SELECT USER_NM FROM USER WHERE USER_ID = LAST_UPDUSR_ID) AS LAST_UPDUSR_NM ,
+				LAST_UPDT_DT
+			FROM  NOTICE  
+		) VV
+		WHERE 1=1
+		<if test="word != null and word != ''">
+		  AND (TITLE LIKE CONCAT('%' , #{word} , '%') OR CONTENT LIKE CONCAT('%' , #{word} , '%'))
+		</if>
+		<if test="register != null and register != ''">
+		  AND REGISTER_NM LIKE CONCAT('%' , #{register} , '%')
+		</if>
+		ORDER BY REGISTER_DT DESC
+		<if test="startNum != null and startNum != ''">
+			LIMIT #{startNum}, #{pageCnt}
+		</if>
+    </select>
+     
+    
+    <select id="noticeListPageCnt" resultType="kr.co.n3n.smartcity.model.CommMap"> 
+    	SELECT COUNT(*) AS TOTAL_COUNT
+		FROM (
+			SELECT 
+				NOTICE_SEQ ,
+				TITLE ,
+				CONTENT ,
+				REGISTER_ID ,
+				(SELECT USER_NM FROM USER WHERE USER_ID = REGISTER_ID) AS REGISTER_NM ,
+				REGISTER_DT ,
+				LAST_UPDUSR_ID ,
+				(SELECT USER_NM FROM USER WHERE USER_ID = LAST_UPDUSR_ID) AS LAST_UPDUSR_NM ,
+				LAST_UPDT_DT
+			FROM  NOTICE  
+		) VV
+		WHERE 1=1
+		<if test="word != null and word != ''">
+		  AND (TITLE LIKE CONCAT('%' , #{word} , '%') OR CONTENT LIKE CONCAT('%' , #{word} , '%'))
+		</if>
+		<if test="register != null and register != ''">
+		  AND REGISTER_NM LIKE CONCAT('%' , #{register} , '%')
+		</if>
+    </select>
+    
+    
+    
+    
+    <insert id="insertNotice" useGeneratedKeys="true" keyProperty="NOTICE_SEQ">
+    	INSERT INTO NOTICE (
+			TITLE ,
+			CONTENT ,
+			REGISTER_ID ,
+			REGISTER_DT ,
+			LAST_UPDUSR_ID ,
+			LAST_UPDT_DT
+		)
+		VALUES (
+			#{titleIns},
+			#{contsIns},
+			#{regId},
+			NOW(),
+			#{regId},
+			NOW()
+		)
+    </insert>
+    
+    
+    
+    <insert id="insertNoticeFile">
+    	INSERT INTO NOTICE_FILE (
+			NOTICE_SEQ ,
+			NOTICE_FILE_SEQ,
+			
+			FILE_NAME_1,
+		
+			REGISTER_ID ,
+			REGISTER_DT ,
+			LAST_UPDUSR_ID ,
+			LAST_UPDT_DT
+		)
+		VALUES (
+			#{NOTICE_SEQ},
+			#{fileSeq},
+			
+			#{fileName},
+			
+			#{regId},
+			NOW(),
+			#{regId},
+			NOW()
+		)
+    
+    </insert>
+    
+    
+    
+    <select id="selectNoticeDetail" resultType="kr.co.n3n.smartcity.model.CommMap">
+		SELECT 
+			NOTICE_SEQ ,
+			TITLE ,
+			CONTENT ,
+			REGISTER_ID ,
+			(SELECT USER_NM FROM USER WHERE USER_ID = REGISTER_ID) AS REGISTER_NM ,
+			REGISTER_DT ,
+			LAST_UPDUSR_ID ,
+			(SELECT USER_NM FROM USER WHERE USER_ID = LAST_UPDUSR_ID) AS LAST_UPDUSR_NM ,
+			LAST_UPDT_DT
+		FROM  NOTICE  
+		WHERE NOTICE_SEQ = #{noticeSeq}
+    </select>
+    
+    
+    <select id="selectNoticeFiles" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT
+			NOTICE_SEQ ,
+			NOTICE_FILE_SEQ ,
+			FILE_NAME_1 ,
+			FILE_NAME_2 ,
+			FILE_PATH_1 ,
+			FILE_PATH_2 ,
+			REGISTER_ID ,
+			REGISTER_DT ,
+			LAST_UPDUSR_ID ,
+			LAST_UPDT_DT 
+		FROM NOTICE_FILE
+		WHERE NOTICE_SEQ = #{noticeSeq}
+    </select>
+    
+    <select id="selectNoticeFilesCnt" resultType="kr.co.n3n.smartcity.model.CommMap">
+		SELECT
+			IFNULL(MAX(NOTICE_FILE_SEQ) + 1 , 1) AS FILE_CNT
+		FROM NOTICE_FILE
+		WHERE NOTICE_SEQ = #{noticeSeq}
+    </select>
+    
+    
+    <update id="updateNotice">
+    	UPDATE NOTICE
+    	SET 
+    		TITLE = #{titleDe} ,
+    		CONTENT = #{contsDe}
+    	WHERE 
+    		NOTICE_SEQ = #{noticeSeq}
+    </update>
+    
+    
+    <delete id="deleteNotice">
+    	DELETE FROM NOTICE WHERE NOTICE_SEQ = #{num}
+    </delete>
+    
+    <delete id="deleteNoticeFiles">
+    	DELETE FROM NOTICE_FILE WHERE NOTICE_SEQ = #{num}
+    </delete>
+   
+    
+    <delete id="deleteNoticeFile">
+    	DELETE FROM NOTICE_FILE WHERE NOTICE_SEQ = #{NOTICE_SEQ} AND NOTICE_FILE_SEQ = #{fileDelSeq}
+    </delete>
+    
+    
+    
+    
+    <select id="faqListPage" resultType="kr.co.n3n.smartcity.model.CommMap">        
+		SELECT FAQ_SEQ , TITLE , CONTENT , REGISTER_ID , REGISTER_NM , REGISTER_DT , LAST_UPDUSR_ID , LAST_UPDUSR_NM , LAST_UPDT_DT , AREA
+		FROM (
+			SELECT 
+				FAQ_SEQ ,
+				TITLE ,
+				CONTENT ,
+				REGISTER_ID ,
+				(SELECT USER_NM FROM USER WHERE USER_ID = REGISTER_ID) AS REGISTER_NM ,
+				REGISTER_DT ,
+				LAST_UPDUSR_ID ,
+				(SELECT USER_NM FROM USER WHERE USER_ID = LAST_UPDUSR_ID) AS LAST_UPDUSR_NM ,
+				LAST_UPDT_DT ,
+				AREA
+			FROM  FAQ  
+		) VV
+		WHERE 1=1
+		<if test="word != null and word != ''">
+		  AND (TITLE LIKE CONCAT('%' , #{word} , '%') OR CONTENT LIKE CONCAT('%' , #{word} , '%'))
+		</if>
+		<if test="area != null and area != ''">
+		  AND AREA = #{area}
+		</if>
+		ORDER BY REGISTER_DT DESC
+		<if test="startNum != null and startNum != ''">
+			LIMIT #{startNum}, #{pageCnt}
+		</if>
+    </select>
+     
+    
+    <select id="faqListPageCnt" resultType="kr.co.n3n.smartcity.model.CommMap"> 
+    	SELECT COUNT(*) AS TOTAL_COUNT
+		FROM (
+			SELECT 
+				FAQ_SEQ ,
+				TITLE ,
+				CONTENT ,
+				REGISTER_ID ,
+				(SELECT USER_NM FROM USER WHERE USER_ID = REGISTER_ID) AS REGISTER_NM ,
+				REGISTER_DT ,
+				LAST_UPDUSR_ID ,
+				(SELECT USER_NM FROM USER WHERE USER_ID = LAST_UPDUSR_ID) AS LAST_UPDUSR_NM ,
+				LAST_UPDT_DT ,
+				AREA
+			FROM  FAQ  
+		) VV
+		WHERE 1=1
+		<if test="word != null and word != ''">
+		  AND (TITLE LIKE CONCAT('%' , #{word} , '%') OR CONTENT LIKE CONCAT('%' , #{word} , '%'))
+		</if>
+		<if test="area != null and area != ''">
+		  AND AREA = #{area}
+		</if>
+    </select>
+    
+    
+    
+    
+    <insert id="insertFaq" useGeneratedKeys="true" keyProperty="FAQ_SEQ">
+    	INSERT INTO FAQ (
+			TITLE ,
+			CONTENT ,
+			REGISTER_ID ,
+			REGISTER_DT ,
+			LAST_UPDUSR_ID ,
+			LAST_UPDT_DT ,
+			AREA
+		)
+		VALUES (
+			#{titleIns},
+			#{contsIns},
+			#{regId},
+			NOW(),
+			#{regId},
+			NOW(),
+			#{areaIns}
+		)
+    </insert>
+    
+    
+    
+    <insert id="insertFaqFile">
+    	INSERT INTO FAQ_FILE (
+			FAQ_SEQ ,
+			FAQ_FILE_SEQ,
+			
+			FILE_NAME_1,
+		
+			REGISTER_ID ,
+			REGISTER_DT ,
+			LAST_UPDUSR_ID ,
+			LAST_UPDT_DT
+		)
+		VALUES (
+			#{FAQ_SEQ},
+			#{fileSeq},
+			
+			#{fileName},
+			
+			#{regId},
+			NOW(),
+			#{regId},
+			NOW()
+		)
+    
+    </insert>
+    
+    
+    
+    
+    <select id="selectFaqDetail" resultType="kr.co.n3n.smartcity.model.CommMap">
+		SELECT 
+			FAQ_SEQ ,
+			TITLE ,
+			CONTENT ,
+			REGISTER_ID ,
+			(SELECT USER_NM FROM USER WHERE USER_ID = REGISTER_ID) AS REGISTER_NM ,
+			REGISTER_DT ,
+			LAST_UPDUSR_ID ,
+			(SELECT USER_NM FROM USER WHERE USER_ID = LAST_UPDUSR_ID) AS LAST_UPDUSR_NM ,
+			LAST_UPDT_DT,
+			AREA
+		FROM  FAQ  
+		WHERE FAQ_SEQ = #{faqSeq}
+    </select>
+    
+    
+    <select id="selectFaqFiles" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT
+			FAQ_SEQ ,
+			FAQ_FILE_SEQ ,
+			FILE_NAME_1 ,
+			FILE_NAME_2 ,
+			FILE_PATH_1 ,
+			FILE_PATH_2 ,
+			REGISTER_ID ,
+			REGISTER_DT ,
+			LAST_UPDUSR_ID ,
+			LAST_UPDT_DT 
+		FROM FAQ_FILE
+		WHERE FAQ_SEQ = #{faqSeq}
+    </select>
+    
+    <select id="selectFaqFilesCnt" resultType="kr.co.n3n.smartcity.model.CommMap">
+		SELECT
+			IFNULL(MAX(FAQ_FILE_SEQ) + 1 , 1) AS FILE_CNT
+		FROM FAQ_FILE
+		WHERE FAQ_SEQ = #{faqSeq}
+    </select>
+    
+    
+    <update id="updateFaq">
+    	UPDATE FAQ
+    	SET 
+    		TITLE = #{titleDe} ,
+    		CONTENT = #{contsDe} ,
+    		AREA = #{areaDe}
+    	WHERE 
+    		FAQ_SEQ = #{faqSeq}
+    </update>
+    
+    
+    
+    <delete id="deleteFaqFile">
+    	DELETE FROM FAQ_FILE WHERE FAQ_SEQ = #{FAQ_SEQ} AND FAQ_FILE_SEQ = #{fileDelSeq}
+    </delete>
+    
+    
+    
+    <delete id="deleteFaq">
+    	DELETE FROM FAQ WHERE FAQ_SEQ = #{num}
+    </delete>
+    
+    <delete id="deleteFaqFiles">
+    	DELETE FROM FAQ_FILE WHERE FAQ_SEQ = #{num}
+    </delete>
+    
+    
+    
+    
+</mapper>

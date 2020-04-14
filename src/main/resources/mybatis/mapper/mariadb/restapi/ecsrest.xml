@@ -1,0 +1,931 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ecsrest">
+    <!-- 
+    메뉴 재귀 쿼리
+    with recursive cte (menu_id, menu_nm, upper_menu_id, scrin_url, depth, oder) as
+(
+ select     menu_id,
+            menu_nm,
+            upper_menu_id,
+            scrin_url,
+            depth,
+            oder
+ from       menu
+ where      upper_menu_id  is null
+ and USE_AT='Y'
+ and front_menu_yn='N'
+ union all
+ select     r.menu_id,
+            r.menu_nm,
+            r.upper_menu_id,
+            r.scrin_url,
+            r.depth,
+            r.oder
+ from       menu r
+ inner join cte
+         on r.upper_menu_id = cte.menu_id
+	where r.USE_AT='Y'
+	and r.front_menu_yn='N'
+)
+select * from cte;
+    
+     -->
+    <!-- 
+  
+	EV01	119이벤트
+	EV02	사회적 약자 이벤트
+	EV03	112긴급출동
+	EV04	112 긴급영상
+	EV05	긴급재난(산불발생)
+	EV06	긴급재난(우량시)
+	EV07	긴급재난(고속도로특별상황)
+	EV08	긴급재난(기상정보 AWS)
+	EV09	긴급재난(동네 예보)
+	EV10	긴급재난(지진현황)
+	EV11	긴급재난(기상특보)
+	EV12	긴급재난(응급복구장비)
+	EV13	긴급재난(소방서)
+	EV14	긴급재난(시가지도록돌발상황)
+     -->
+     
+     <!--      
+     SS01	119
+	SS02	112
+	SS03	긴급재난
+	SS04	사회적약자
+      -->
+    <select id="getEventYN" resultType="kr.co.n3n.smartcity.model.CommMap">        
+		SELECT 
+			EVENT_RECV_YN
+		FROM EVENT_EPRESS
+		WHERE EVENT_CODE_GROUP_ID='EV02'
+		AND EVENT_CODE_ID=#{EVENT_CODE}
+    </select>
+    
+    <select id="getCheckUserID" resultType="kr.co.n3n.smartcity.model.CommMap">        
+		SELECT 
+			COUNT(1) CNT
+		FROM USER
+		WHERE USER_ID=#{USER_ID}		
+    </select>
+    
+    
+    
+    <select id="getEventSeq" resultType="kr.co.n3n.smartcity.model.CommMap">        
+		SELECT 
+			CASE WHEN MAX(EVENT_SITTN_SEQ) IS NULL THEN 
+				1 
+			ELSE 
+				MAX(EVENT_SITTN_SEQ)+1
+			END EVENT_SEQ
+		FROM EVENT_HIST
+				
+    </select>
+    
+    <!-- EVENT_HIST -->
+    <insert id="insertEVENT_HIST">
+    	INSERT INTO EVENT_HIST
+		(
+			EVENT_SITTN_SEQ,			
+			STATUS_CODE_GROUP_ID,
+			STATUS_CODE_ID,
+			EVENT_DT,
+			REGISTER_ID,
+			REGISTER_DT,
+			LAST_UPDUSR_ID,
+			LAST_UPDT_DT,
+			EVENT_CODE_GROUP_ID,
+			EVENT_CODE_ID,
+			SD_CODE_GROUP_ID,
+			SD_CODE_ID
+		)
+		VALUES
+		(
+			#{EVENT_SITTN_SEQ},			
+			#{STATUS_CODE_GROUP_ID},
+			#{STATUS_CODE_ID},
+			#{EVENT_DT},
+			#{REGISTER_ID},
+			now(),
+			#{LAST_UPDUSR_ID},
+			now(),
+			#{EVENT_CODE_GROUP_ID},
+			#{EVENT_CODE_ID},
+			#{SD_CODE_GROUP_ID},
+			#{SD_CODE_ID}
+		)
+    </insert>
+    
+    
+    <!-- 119 master -->
+    <insert id="insertIF_119_URGENCY_MASTER">
+    	INSERT INTO IF_119_URGENCY_MASTER
+		(
+			TRNSMIT_NO,
+			ECTCC_SE_CODE,
+			PROGRS_SE_CODE,
+			PROGRS_DT,
+			TRNSMIT_SYS,
+			RECPTN_SYS,
+			SNDNG_DT,	
+			ASORT_NM,
+			ASORT_DETAIL_NM,
+			OCCRRNC_LC_LO,
+			OCCRRNC_LC_LA,
+			OCCRRNC_LC_NM,
+			LEGALDONG_CODE_CITY,
+			OCCUR_DT,
+			TRNSMIS_MAN_ID
+		)
+		VALUES
+		(
+			#{TRNSMIT_NO},
+			#{ECTCC_SE_CODE},
+			#{PROGRS_SE_CODE},
+			#{PROGRS_DT},
+			#{TRNSMIT_SYS},
+			#{RECPTN_SYS},
+			#{SNDNG_DT},
+			#{ASORT_NM},
+			#{ASORT_DETAIL_NM},
+			#{OCCRRNC_LC_LO},
+			#{OCCRRNC_LC_LA},
+			#{OCCRRNC_LC_NM},
+			#{LEGALDONG_CODE_CITY},
+			#{OCCUR_DT},
+			#{TRNSMIS_MAN_ID}
+		) ON DUPLICATE KEY UPDATE
+			ECTCC_SE_CODE=#{ECTCC_SE_CODE},
+			PROGRS_SE_CODE=#{PROGRS_SE_CODE},
+			PROGRS_DT=#{PROGRS_DT},
+			TRNSMIT_SYS=#{TRNSMIT_SYS},
+			RECPTN_SYS=#{RECPTN_SYS},
+			SNDNG_DT=#{SNDNG_DT},
+			ASORT_NM=#{ASORT_NM},
+			ASORT_DETAIL_NM=#{ASORT_DETAIL_NM},
+			OCCRRNC_LC_LO=#{OCCRRNC_LC_LO},
+			OCCRRNC_LC_LA=#{OCCRRNC_LC_LA},
+			OCCRRNC_LC_NM=#{OCCRRNC_LC_NM},
+			LEGALDONG_CODE_CITY=#{LEGALDONG_CODE_CITY},
+			OCCUR_DT=#{OCCUR_DT},
+			TRNSMIS_MAN_ID=#{TRNSMIS_MAN_ID}
+    </insert>
+    
+    <!-- 119 -->
+    <insert id="insertIF_119_URGENCY">
+    	INSERT INTO IF_119_URGENCY
+		(
+			ECTCC_SE_CODE,
+			PROGRS_SE_CODE,
+			PROGRS_DT,
+			TRNSMIT_SYS,
+			RECPTN_SYS,
+			SNDNG_DT,			
+			TRNSMIT_NO,
+			ASORT_NM,
+			ASORT_DETAIL_NM,
+			OCCRRNC_LC_LO,
+			OCCRRNC_LC_LA,
+			OCCRRNC_LC_NM,
+			LEGALDONG_CODE_CITY,
+			OCCUR_DT,
+			TRNSMIS_MAN_ID
+		)
+		VALUES
+		(
+			#{ECTCC_SE_CODE},
+			#{PROGRS_SE_CODE},
+			#{PROGRS_DT},
+			#{TRNSMIT_SYS},
+			#{RECPTN_SYS},
+			#{SNDNG_DT},			
+			#{TRNSMIT_NO},
+			#{ASORT_NM},
+			#{ASORT_DETAIL_NM},
+			#{OCCRRNC_LC_LO},
+			#{OCCRRNC_LC_LA},
+			#{OCCRRNC_LC_NM},
+			#{LEGALDONG_CODE_CITY},
+			#{OCCUR_DT},
+			#{TRNSMIS_MAN_ID}
+		)
+    </insert>
+    
+    
+    <!-- 112 긴급영상 -->
+    <insert id="insertIF_112_EMRGNCY_VIDO_SPORT_MASTER">
+    	INSERT INTO IF_112_EMRGNCY_VIDO_SPORT_MASTER
+		(
+			INCDNT_NO,
+			ECTCC_SE_CODE,
+			PROGRS_SE_CODE,
+			PROGRS_DT,
+			TRNSMIT_SYS,
+			RECPTN_SYS,
+			SNDNG_DT,
+			ACDNT_GRAD,
+			ACDNT_TY,
+			INCDNT_SPOT_LC_LO,
+			INCDNT_SPOT_LC_LA,
+			INCDNT_SPOT_ALL_ADRES,
+			AREA_CODE,
+			INCDNT_OCCRRNC_DT,
+			USER_ID	
+		)
+		VALUES
+		(
+			#{INCDNT_NO},
+			#{ECTCC_SE_CODE},
+			#{PROGRS_SE_CODE},
+			#{PROGRS_DT},
+			#{TRNSMIT_SYS},
+			#{RECPTN_SYS},
+			#{SNDNG_DT},
+			#{ACDNT_GRAD},
+			#{ACDNT_TY},
+			#{INCDNT_SPOT_LC_LO},
+			#{INCDNT_SPOT_LC_LA},
+			#{INCDNT_SPOT_ALL_ADRES},
+			#{AREA_CODE},
+			#{INCDNT_OCCRRNC_DT},
+			#{USER_ID}				
+		) ON DUPLICATE KEY UPDATE
+			ECTCC_SE_CODE=#{ECTCC_SE_CODE},
+			PROGRS_SE_CODE=#{PROGRS_SE_CODE},
+			PROGRS_DT=#{PROGRS_DT},
+			TRNSMIT_SYS=#{TRNSMIT_SYS},
+			RECPTN_SYS=#{RECPTN_SYS},
+			SNDNG_DT=#{SNDNG_DT},
+			ACDNT_GRAD=#{ACDNT_GRAD},
+			ACDNT_TY=#{ACDNT_TY},
+			INCDNT_SPOT_LC_LO=#{INCDNT_SPOT_LC_LO},
+			INCDNT_SPOT_LC_LA=#{INCDNT_SPOT_LC_LA},
+			INCDNT_SPOT_ALL_ADRES=#{INCDNT_SPOT_ALL_ADRES},
+			AREA_CODE=#{AREA_CODE},
+			INCDNT_OCCRRNC_DT=#{INCDNT_OCCRRNC_DT},
+			USER_ID=#{USER_ID}	
+
+    </insert>
+    
+    <!-- 112 긴급영상 -->
+    <insert id="insertIF_112_EMRGNCY_VIDO_SPORT">
+    	INSERT INTO IF_112_EMRGNCY_VIDO_SPORT
+		(
+			ECTCC_SE_CODE,
+			PROGRS_SE_CODE,
+			PROGRS_DT,
+			TRNSMIT_SYS,
+			RECPTN_SYS,
+			SNDNG_DT,			
+			INCDNT_NO,
+			ACDNT_GRAD,
+			ACDNT_TY,
+			INCDNT_SPOT_LC_LO,
+			INCDNT_SPOT_LC_LA,
+			INCDNT_SPOT_ALL_ADRES,
+			AREA_CODE,
+			INCDNT_OCCRRNC_DT,
+			USER_ID	
+		)
+		VALUES
+		(
+			#{ECTCC_SE_CODE},
+			#{PROGRS_SE_CODE},
+			#{PROGRS_DT},
+			#{TRNSMIT_SYS},
+			#{RECPTN_SYS},
+			#{SNDNG_DT},			
+			#{INCDNT_NO},
+			#{ACDNT_GRAD},
+			#{ACDNT_TY},
+			#{INCDNT_SPOT_LC_LO},
+			#{INCDNT_SPOT_LC_LA},
+			#{INCDNT_SPOT_ALL_ADRES},
+			#{AREA_CODE},
+			#{INCDNT_OCCRRNC_DT},
+			#{USER_ID}				
+		)
+
+    </insert>
+    
+    <!-- 사회적 약자 -->
+    <insert id="insertIF_DSC_SUPPPORT_MASTER">
+    	INSERT INTO IF_DSC_SUPPPORT_MASTER
+		(
+			OCCRRNC_NO,
+			ECTCC_SE_CODE,
+			PROGRS_SE_CODE,
+			LOGIN_DT,
+			TRNSMIT_SYS,
+			RECPTN_SYS,
+			SNDNG_DT,			
+			SVC_TY,
+			INCDNT_SPOT_LC_LO,
+			INCDNT_SPOT_LC_LA,
+			INCDNT_SPOT_ALL_ADRES,
+			AREA_CODE,
+			REF_ID,
+			NAME,
+			MOBLPHON_NO,
+			BIRTH_DATE,
+			SEXDSTN,
+			ADRES_DWLSIT,
+			PRTCTOR_NM,
+			PRTCTOR_MOBLPHON,			
+			OCCRRNC_DT,
+			IMAGE,
+			APPRNC_INFO,
+			PARTCLR_MATTER,
+			TRNSMIS_MAN_ID						
+		)
+		VALUES
+		(
+			#{OCCRRNC_NO},
+			#{ECTCC_SE_CODE},
+			#{PROGRS_SE_CODE},
+			#{LOGIN_DT},
+			#{TRNSMIT_SYS},
+			#{RECPTN_SYS},
+			#{SNDNG_DT},
+			#{SVC_TY},
+			#{INCDNT_SPOT_LC_LO},
+			#{INCDNT_SPOT_LC_LA},
+			#{INCDNT_SPOT_ALL_ADRES},
+			#{AREA_CODE},
+			#{REF_ID},
+			#{NAME},
+			#{MOBLPHON_NO},
+			#{BIRTH_DATE},
+			#{SEXDSTN},
+			#{ADRES_DWLSIT},
+			#{PRTCTOR_NM},
+			#{PRTCTOR_MOBLPHON},			
+			#{OCCRRNC_DT},
+			#{IMAGE},
+			#{APPRNC_INFO},
+			#{PARTCLR_MATTER},
+			#{TRNSMIS_MAN_ID}					
+		) ON DUPLICATE KEY UPDATE
+			ECTCC_SE_CODE=#{ECTCC_SE_CODE},
+			PROGRS_SE_CODE=#{PROGRS_SE_CODE},
+			LOGIN_DT=#{LOGIN_DT},
+			TRNSMIT_SYS=#{TRNSMIT_SYS},
+			RECPTN_SYS=#{RECPTN_SYS},
+			SNDNG_DT=#{SNDNG_DT},
+			SVC_TY=#{SVC_TY},
+			INCDNT_SPOT_LC_LO=#{INCDNT_SPOT_LC_LO},
+			INCDNT_SPOT_LC_LA=#{INCDNT_SPOT_LC_LA},
+			INCDNT_SPOT_ALL_ADRES=#{INCDNT_SPOT_ALL_ADRES},
+			AREA_CODE=#{AREA_CODE},
+			REF_ID=#{REF_ID},
+			NAME=#{NAME},
+			MOBLPHON_NO=#{MOBLPHON_NO},
+			BIRTH_DATE=#{BIRTH_DATE},
+			SEXDSTN=#{SEXDSTN},
+			ADRES_DWLSIT=#{ADRES_DWLSIT},
+			PRTCTOR_NM=#{PRTCTOR_NM},
+			PRTCTOR_MOBLPHON=#{PRTCTOR_MOBLPHON},			
+			OCCRRNC_DT=#{OCCRRNC_DT},
+			IMAGE=#{IMAGE},
+			APPRNC_INFO=#{APPRNC_INFO},
+			PARTCLR_MATTER=#{PARTCLR_MATTER},
+			TRNSMIS_MAN_ID=#{TRNSMIS_MAN_ID}	
+
+    </insert>
+    
+    <!-- 사회적 약자 -->
+    <insert id="insertIF_DSC_SUPPPORT">
+    	INSERT INTO IF_DSC_SUPPPORT
+		(
+			ECTCC_SE_CODE,
+			PROGRS_SE_CODE,
+			LOGIN_DT,
+			TRNSMIT_SYS,
+			RECPTN_SYS,
+			SNDNG_DT,			
+			OCCRRNC_NO,
+			SVC_TY,
+			INCDNT_SPOT_LC_LO,
+			INCDNT_SPOT_LC_LA,
+			INCDNT_SPOT_ALL_ADRES,
+			AREA_CODE,
+			REF_ID,
+			NAME,
+			MOBLPHON_NO,
+			BIRTH_DATE,
+			SEXDSTN,
+			ADRES_DWLSIT,
+			PRTCTOR_NM,
+			PRTCTOR_MOBLPHON,			
+			OCCRRNC_DT,
+			IMAGE,
+			APPRNC_INFO,
+			PARTCLR_MATTER,
+			TRNSMIS_MAN_ID						
+		)
+		VALUES
+		(
+			#{ECTCC_SE_CODE},
+			#{PROGRS_SE_CODE},
+			#{LOGIN_DT},
+			#{TRNSMIT_SYS},
+			#{RECPTN_SYS},
+			#{SNDNG_DT},			
+			#{OCCRRNC_NO},
+			#{SVC_TY},
+			#{INCDNT_SPOT_LC_LO},
+			#{INCDNT_SPOT_LC_LA},
+			#{INCDNT_SPOT_ALL_ADRES},
+			#{AREA_CODE},
+			#{REF_ID},
+			#{NAME},
+			#{MOBLPHON_NO},
+			#{BIRTH_DATE},
+			#{SEXDSTN},
+			#{ADRES_DWLSIT},
+			#{PRTCTOR_NM},
+			#{PRTCTOR_MOBLPHON},			
+			#{OCCRRNC_DT},
+			#{IMAGE},
+			#{APPRNC_INFO},
+			#{PARTCLR_MATTER},
+			#{TRNSMIS_MAN_ID}					
+		)
+
+    </insert>
+    
+    <!-- 산불발생정보  -->
+    <insert id="insertELI_FOA_FOREST_MAP">
+    	INSERT INTO ELI_FOA_FOREST_MAP
+		(
+			LK_INFO_ID,
+			RCV_YMD_HMS,
+			SEQ_NO,
+			TP_STATUS,
+			POINT_X,
+			POINT_Y,
+			LOC,
+			RCV_YMDHM,
+			EVENT_SITTN_SEQ
+		)
+		VALUES
+		(
+			#{LK_INFO_ID},
+			#{RCV_YMD_HMS},
+			#{SEQ_NO},
+			#{TP_STATUS},
+			#{POINT_X},
+			#{POINT_Y},
+			#{LOC},
+			#{RCV_YMDHM},
+			#{EVENT_SITTN_SEQ}
+		)
+
+
+
+    </insert>
+    
+    <!-- 우량시단위  -->
+    <insert id="insertELI_HRF_RFHR">
+    	INSERT INTO ELI_HRF_RFHR
+		(
+			LK_INFO_ID,
+			RCV_YMD_HMS,
+			SEQ_NO,
+			OBSVT_ID,
+			OBSVT_NM,
+			RFHR_STATUS,
+			OBSVT_YMDHM,
+			HRRF,
+			POINT_X,
+			POINT_Y,
+			EVENT_SITTN_SEQ
+		)
+		VALUES
+		(
+			#{LK_INFO_ID},
+			#{RCV_YMD_HMS},
+			#{SEQ_NO},
+			#{OBSVT_ID},
+			#{OBSVT_NM},
+			#{RFHR_STATUS},
+			#{OBSVT_YMDHM},
+			#{HRRF},
+			#{POINT_X},
+			#{POINT_Y},
+			#{EVENT_SITTN_SEQ}
+		)
+    </insert>
+    
+    <!-- 고속도로특별상황관리  -->
+    <insert id="insertELI_KHC_ACC">
+    	INSERT INTO ELI_KHC_ACC
+		(
+			LK_INFO_ID,
+			RCV_YMD_HMS,
+			SEQ_NO,
+			END_YN,
+			LOC,
+			YMDHM,
+			UPDN,
+			STAT,
+			POINT_X,
+			POINT_Y,
+			G_ID,
+			EVENT_SITTN_SEQ
+		)
+		VALUES
+		(
+			#{LK_INFO_ID},
+			#{RCV_YMD_HMS},
+			#{SEQ_NO},
+			#{END_YN},
+			#{LOC},
+			#{YMDHM},
+			#{UPDN},
+			#{STAT},
+			#{POINT_X},
+			#{POINT_Y},
+			#{G_ID},
+			#{EVENT_SITTN_SEQ}
+		)
+
+
+    </insert>
+    
+    
+    <!-- 기상정보AWS  -->
+    <insert id="insertELI_KMA_AWS_10M">
+    	INSERT INTO ELI_KMA_AWS_10M
+		(
+			LK_INFO_ID,
+			RCV_YMD_HMS,
+			SEQ_NO,
+			OBSVT_YMDHM,
+			POINT_X,
+			POINT_Y,
+			LOC,
+			OBSVT_ADDR,
+			AWS_LVL_TP,
+			AWS_LVL,
+			WIND,
+			WS,
+			TA,
+			QTY_DAY,
+			EVENT_SITTN_SEQ
+		)
+		VALUES
+		(
+			#{LK_INFO_ID},
+			#{RCV_YMD_HMS},
+			#{SEQ_NO},
+			#{OBSVT_YMDHM},
+			#{POINT_X},
+			#{POINT_Y},
+			#{LOC},
+			#{OBSVT_ADDR},
+			#{AWS_LVL_TP},
+			#{AWS_LVL},
+			#{WIND},
+			#{WS},
+			#{TA},
+			#{QTY_DAY},
+			#{EVENT_SITTN_SEQ}
+		)
+    </insert>
+    
+    <!-- 동네예보  -->
+    <insert id="insertELI_KMA_DFS_SHRT">
+    	INSERT INTO ELI_KMA_DFS_SHRT
+		(
+			LK_INFO_ID,
+			RCV_YMD_HMS,
+			SEQ_NO,
+			FC_YMDHM,
+			LOC,
+			POINT_X,
+			POINT_Y,
+			RAIN_1,
+			RAIN_2,
+			RAIN_3,
+			RAIN_4,
+			RAIN_5,
+			WAD_1,
+			WAD_2,
+			WAD_3,
+			WAD_4,
+			WAD_5,
+			TEM_1,
+			TEM_2,
+			TEM_3,
+			TEM_4,
+			TEM_5,
+			HUM_1,
+			HUM_2,
+			HUM_3,
+			HUM_4,
+			HUM_5,
+			EVENT_SITTN_SEQ
+		)
+		VALUES
+		(
+			#{LK_INFO_ID},
+			#{RCV_YMD_HMS},
+			#{SEQ_NO},
+			#{FC_YMDHM},
+			#{LOC},
+			#{POINT_X},
+			#{POINT_Y},
+			#{RAIN_1},
+			#{RAIN_2},
+			#{RAIN_3},
+			#{RAIN_4},
+			#{RAIN_5},
+			#{WAD_1},
+			#{WAD_2},
+			#{WAD_3},
+			#{WAD_4},
+			#{WAD_5},
+			#{TEM_1},
+			#{TEM_2},
+			#{TEM_3},
+			#{TEM_4},
+			#{TEM_5},
+			#{HUM_1},
+			#{HUM_2},
+			#{HUM_3},
+			#{HUM_4},
+			#{HUM_5},
+			#{EVENT_SITTN_SEQ}
+		)
+
+
+    </insert>
+    
+    <!-- 지진현황  -->
+    <insert id="insertELI_KMA_EARTH_INFM">
+    	INSERT INTO ELI_KMA_EARTH_INFM
+		(
+			LK_INFO_ID,
+			RCV_YMD_HMS,
+			SEQ_NO,
+			OCR_YMDHMS,
+			POINT_X,
+			POINT_Y,
+			LOC,
+			EARTH_INFM_SCLE,
+			EARTH_INFM_NO_ORD,
+			EARTH_INFM_NO_REF,
+			EARTH_INFM_CD_STN,
+			EVENT_SITTN_SEQ
+		)
+		VALUES
+		(
+			#{LK_INFO_ID},
+			#{RCV_YMD_HMS},
+			#{SEQ_NO},
+			#{OCR_YMDHMS},
+			#{POINT_X},
+			#{POINT_Y},
+			#{LOC},
+			#{EARTH_INFM_SCLE},
+			#{EARTH_INFM_NO_ORD},
+			#{EARTH_INFM_NO_REF},
+			#{EARTH_INFM_CD_STN},
+			#{EVENT_SITTN_SEQ}
+		)
+    </insert>
+    
+    <!-- 기상특보  -->
+    <insert id="insertELI_KMA_INFORM">
+    	INSERT INTO ELI_KMA_INFORM
+		(
+			LK_INFO_ID,
+			RCV_YMD_HMS,
+			SEQ_NO,
+			KMA_YMDHMS,
+			KMA_SEQ_NO,
+			KMA_TITLE,
+			KMA_STAT_CTNT,
+			KMA_SECT_AREA,
+			KMA_PW_VL,
+			KMA_CD_STN,
+			EVENT_SITTN_SEQ
+		)
+		VALUES
+		(
+			#{LK_INFO_ID},
+			#{RCV_YMD_HMS},
+			#{SEQ_NO},
+			#{KMA_YMDHMS},
+			#{KMA_SEQ_NO},
+			#{KMA_TITLE},
+			#{KMA_STAT_CTNT},
+			#{KMA_SECT_AREA},
+			#{KMA_PW_VL},
+			#{KMA_CD_STN},
+			#{EVENT_SITTN_SEQ}
+		)
+
+    </insert>
+    
+    <!-- 응급복구장비  -->
+    <insert id="insertELI_NEM_EMRE">
+    	INSERT INTO ELI_NEM_EMRE
+		(
+			LK_INFO_ID,
+			RCV_YMD_HMS,
+			SEQ_NO,
+			ASEQ_NO,
+			EQUP_CD,
+			EQUP_NAME,
+			AMT,
+			AREA_CD,
+			AREA_NAME,
+			AREA_CD_H,
+			COMPANY,
+			OWNER_NAME,
+			POINT_X,
+			POINT_Y,
+			EVENT_SITTN_SEQ
+		)		
+		VALUES
+		(
+			#{LK_INFO_ID},
+			#{RCV_YMD_HMS},
+			#{SEQ_NO},
+			#{ASEQ_NO},
+			#{EQUP_CD},
+			#{EQUP_NAME},
+			#{AMT},
+			#{AREA_CD},
+			#{AREA_NAME},
+			#{AREA_CD_H},
+			#{COMPANY},
+			#{OWNER_NAME},
+			#{POINT_X},
+			#{POINT_Y},
+			#{EVENT_SITTN_SEQ}
+		)
+
+    </insert>
+    
+    <!-- 소방서  -->
+    <insert id="insertELI_NEM_FIRS">
+    	INSERT INTO ELI_NEM_FIRS
+		(
+			LK_INFO_ID,
+			RCV_YMD_HMS,
+			SEQ_NO,
+			FIRS_ID,
+			FIRS_NM,
+			AREA_CD,
+			AREA_ADDR,
+			CD_GIS,
+			TEL,
+			FAX,
+			EVENT_SITTN_SEQ
+		)
+		VALUES
+		(
+			#{LK_INFO_ID},
+			#{RCV_YMD_HMS},
+			#{SEQ_NO},
+			#{FIRS_ID},
+			#{FIRS_NM},
+			#{AREA_CD},
+			#{AREA_ADDR},
+			#{CD_GIS},
+			#{TEL},
+			#{FAX},
+			#{EVENT_SITTN_SEQ}
+		)
+
+    </insert>
+    
+    
+    <!-- 시가지도로돌발 상황정보  -->
+    <insert id="insertELI_RTSA_OCCURID">
+    	INSERT INTO ELI_RTSA_OCCURID
+		(
+			LK_INFO_ID,
+			RCV_YMD_HMS,
+			SEQ_NO,
+			STD_LINK_ID,
+			ROAD_NAME,
+			MEASURE_TIME,
+			TYPE_OTHER,
+			RGS_DATE,
+			EVENT_SITTN_SEQ
+		)
+		VALUES
+		(
+			#{LK_INFO_ID},
+			#{RCV_YMD_HMS},
+			#{SEQ_NO},
+			#{STD_LINK_ID},
+			#{ROAD_NAME},
+			#{MEASURE_TIME},
+			#{TYPE_OTHER},
+			now(),
+			#{EVENT_SITTN_SEQ}
+		)
+
+
+    </insert>
+    
+    <!-- 112 긴급출동 다매체 접수 테이블  -->
+    <select id="getEs112MtmdaRecept" resultType="kr.co.n3n.smartcity.model.CommMap">        
+		SELECT 
+				EVT_OCR_NO,
+			    RECEPT_YMD,
+			    MTMDA_PRCS_TY_CD,
+			    MTMDA_PRCS_STATE,
+			    TITLE,
+			    IMG_START_YMD_HMS,
+			    IMG_END_YMD_HMS,
+			    POINT_X,
+			    POINT_Y,
+			    ADRES_NM,
+			    CONTS,
+			    RECEPT_PRCS_YN,
+			    RECEPT_PRCS_YMD_HMS,
+			    FILE_ID_RETURN_YMD_HMS,
+			    RGS_DATE,
+			    RECEPT_NM,
+			    RECEPT_TELNO,
+			    RECV_NO,
+			    UPD_DATE,
+			    EVENT_SITTN_SEQ
+		FROM IF_ES_112_MTMDA_RECEPT
+		where MTMDA_PRCS_STATE in ('03', '02')
+		AND RECEPT_PRCS_YN='N'
+		AND FILE_ID_RETURN_YMD_HMS IS NOT NULL
+    </select>
+    
+    <!-- 112 긴급출동 다매체 접수  파일-->
+    <select id="getEs112MtmdaRreceptAtch" resultType="kr.co.n3n.smartcity.model.CommMap">        
+		SELECT
+			FILE_ID,		    
+		    IMG_TY_CD FILE_TYPE
+		FROM IF_ES_112_MTMDA_RECEPT_ATCH
+		where EVT_OCR_NO=#{EVT_OCR_NO}
+    </select>
+    
+  	<update id="updateRetYndhms">
+    	update IF_ES_112_MTMDA_RECEPT 
+    		set 
+    		RET_YMDHMS=#{RET_YMDHMS}
+    	where EVT_OCR_NO=#{EVT_OCR_NO}    	
+    </update>
+    
+    <update id="updatePrcsState">
+    	update IF_ES_112_MTMDA_RECEPT 
+    		SET 
+    		MTMDA_PRCS_STATE='04',
+    		RECEPT_PRCS_YN='Y'
+    	where RET_YMDHMS=#{RET_YMDHMS}    	
+    </update>
+    
+   
+    
+    <update id="updateRecvNo">
+    	update IF_ES_112_MTMDA_RECEPT 
+    		set 
+    		RECV_NO=#{RECV_NO},
+    		RECEPT_PRCS_YMD_HMS=#{RECEPT_PRCS_YMD_HMS}    		
+    	where EVT_OCR_NO=#{EVT_OCR_NO}    	
+    </update>
+    
+    
+    
+    <select id="getFileIdCheck" resultType="kr.co.n3n.smartcity.model.CommMap">        
+		SELECT 
+			COUNT(1) CNT, 
+			SUM(CASE WHEN FILE_ID IS NULL THEN 0 ELSE 1 END) NULL_CNT
+		FROM IF_ES_112_MTMDA_RECEPT_ATCH 
+		WHERE EVT_OCR_NO IN (
+			SELECT EVT_OCR_NO  FROM 
+			IF_ES_112_MTMDA_RECEPT_ATCH 
+			WHERE  IMG_URL =#{FILE_NM}
+		)
+    </select>
+    
+    <update id="updateFileId">
+    	update IF_ES_112_MTMDA_RECEPT_ATCH 
+    		set 
+    		FILE_ID=#{FILE_ID}    		
+    	where IMG_URL=#{FILE_NM}    	
+    </update>
+    
+    <update id="updateFILE_ID_RETURN_YMD_HMS">
+    	UPDATE IF_ES_112_MTMDA_RECEPT SET 
+    		FILE_ID_RETURN_YMD_HMS=DATE_FORMAT(NOW(),'%Y%m%d%H%i%s')  
+		WHERE EVT_OCR_NO IN (
+			SELECT EVT_OCR_NO FROM 
+			IF_ES_112_MTMDA_RECEPT_ATCH 
+			WHERE  IMG_URL =#{FILE_NM}
+		)
+    </update>
+</mapper>

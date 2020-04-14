@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="note">
+    
+    
+    
+    <select id="receivedNoteListPage" resultType="kr.co.n3n.smartcity.model.CommMap">        
+		SELECT NOTE_SEQ , TITLE , CONTENT , SENDER_ID , SENDER_NM , SENDER_DATE , RECEIVER_ID , RECEIVER_NM , RECEIVER_DATE
+		FROM (
+			SELECT 
+				NOTE_SEQ ,
+				TITLE ,
+				CONTENT ,
+				SENDER_ID ,
+				(SELECT USER_NM FROM USER WHERE USER_ID = SENDER_ID) AS SENDER_NM ,
+				SENDER_DATE ,
+				RECEIVER_ID ,
+				(SELECT USER_NM FROM USER WHERE USER_ID = RECEIVER_ID) AS RECEIVER_NM ,
+				RECEIVER_DATE ,
+				RECEIVE_DEL_YN
+			FROM  NOTE_INFORMATION  
+		) VV
+		WHERE 1=1
+		  AND RECEIVER_ID = #{regId}
+		  AND RECEIVE_DEL_YN = 'N'
+		<if test="content != null and content != ''">
+		  AND CONTENT LIKE CONCAT('%' , #{content} , '%')
+		</if>
+		<if test="sender != null and sender != ''">
+		  AND SENDER_NM LIKE CONCAT('%' , #{sender} , '%')
+		</if>
+		ORDER BY RECEIVER_DATE DESC
+		<if test="startNum != null and startNum != ''">
+			LIMIT #{startNum}, #{pageCnt}
+		</if>
+    </select>
+    
+     
+    
+    <select id="receivedNoteListPageCnt" resultType="kr.co.n3n.smartcity.model.CommMap"> 
+    	SELECT COUNT(*) AS TOTAL_COUNT
+		FROM (
+			SELECT 
+				NOTE_SEQ ,
+				TITLE ,
+				CONTENT ,
+				SENDER_ID ,
+				(SELECT USER_NM FROM USER WHERE USER_ID = SENDER_ID) AS SENDER_NM ,
+				SENDER_DATE ,
+				RECEIVER_ID ,
+				(SELECT USER_NM FROM USER WHERE USER_ID = RECEIVER_ID) AS RECEIVER_NM ,
+				RECEIVER_DATE ,
+				RECEIVE_DEL_YN
+			FROM  NOTE_INFORMATION  
+		) VV
+		WHERE 1=1
+		  AND RECEIVER_ID = #{regId}
+		  AND RECEIVE_DEL_YN = 'N'
+		<if test="content != null and content != ''">
+		  AND CONTENT LIKE CONCAT('%' , #{content} , '%')
+		</if>
+		<if test="sender != null and sender != ''">
+		  AND SENDER_NM LIKE CONCAT('%' , #{sender} , '%')
+		</if>
+    </select>
+    
+    
+    
+    <select id="selectReceivedNote" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT NOTE_SEQ , TITLE , CONTENT , SENDER_ID , SENDER_NM , SENDER_DATE , RECEIVER_ID , RECEIVER_NM , RECEIVER_DATE
+		FROM (
+			SELECT 
+				NOTE_SEQ ,
+				TITLE ,
+				CONTENT ,
+				SENDER_ID ,
+				(SELECT USER_NM FROM USER WHERE USER_ID = SENDER_ID) AS SENDER_NM ,
+				SENDER_DATE ,
+				RECEIVER_ID ,
+				(SELECT USER_NM FROM USER WHERE USER_ID = RECEIVER_ID) AS RECEIVER_NM ,
+				RECEIVER_DATE 
+			FROM  NOTE_INFORMATION  
+		) VV
+		WHERE VV.NOTE_SEQ = #{noteSeq}
+    </select>
+    
+    
+    
+    
+    <update id="deleteReceivedNote">
+    	UPDATE NOTE_INFORMATION 
+    		SET RECEIVE_DEL_YN = 'Y'
+    	WHERE NOTE_SEQ = #{num}
+    </update>
+    
+    
+    
+    
+    
+    <select id="sendNoteListPage" resultType="kr.co.n3n.smartcity.model.CommMap">        
+		SELECT NOTE_SEQ , TITLE , CONTENT , SENDER_ID , SENDER_NM , SENDER_DATE , RECEIVER_ID , RECEIVER_NM , SEND_DEL_YN
+		FROM (
+			SELECT 
+				NOTE_SEQ ,
+				TITLE ,
+				CONTENT ,
+				SENDER_ID ,
+				(SELECT USER_NM FROM USER WHERE USER_ID = SENDER_ID) AS SENDER_NM ,
+				SENDER_DATE ,
+				RECEIVER_ID ,
+				(SELECT USER_NM FROM USER WHERE USER_ID = RECEIVER_ID) AS RECEIVER_NM ,
+				RECEIVER_DATE ,
+				SEND_DEL_YN
+			FROM  NOTE_INFORMATION  
+		) VV
+		WHERE 1=1
+		  AND SENDER_ID = #{regId}
+		  AND SEND_DEL_YN = 'N'
+		<if test="content != null and content != ''">
+		  AND CONTENT LIKE CONCAT('%' , #{content} , '%')
+		</if>
+		<if test="receiver != null and receiver != ''">
+		  AND RECEIVER_NM LIKE CONCAT('%' , #{receiver} , '%')
+		</if>
+		ORDER BY RECEIVER_DATE DESC
+		<if test="startNum != null and startNum != ''">
+			LIMIT #{startNum}, #{pageCnt}
+		</if>
+    </select>
+    
+     
+    
+    <select id="sendNoteListPageCnt" resultType="kr.co.n3n.smartcity.model.CommMap"> 
+    	SELECT COUNT(*) AS TOTAL_COUNT
+		FROM (
+			SELECT 
+				NOTE_SEQ ,
+				TITLE ,
+				CONTENT ,
+				SENDER_ID ,
+				(SELECT USER_NM FROM USER WHERE USER_ID = SENDER_ID) AS SENDER_NM ,
+				SENDER_DATE ,
+				RECEIVER_ID ,
+				(SELECT USER_NM FROM USER WHERE USER_ID = RECEIVER_ID) AS RECEIVER_NM ,
+				RECEIVER_DATE ,
+				SEND_DEL_YN
+			FROM  NOTE_INFORMATION  
+		) VV
+		WHERE 1=1
+		  AND SENDER_ID = #{regId}
+		  AND SEND_DEL_YN = 'N'
+		<if test="content != null and content != ''">
+		  AND CONTENT LIKE CONCAT('%' , #{content} , '%')
+		</if>
+		<if test="receiver != null and receiver != ''">
+		  AND RECEIVER_NM LIKE CONCAT('%' , #{receiver} , '%')
+		</if>
+    </select>
+    
+    
+    
+    
+    <select id="selectSentNote" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT NOTE_SEQ , TITLE , CONTENT , SENDER_ID , SENDER_NM , SENDER_DATE , RECEIVER_ID , RECEIVER_NM , RECEIVER_DATE
+		FROM (
+			SELECT 
+				NOTE_SEQ ,
+				TITLE ,
+				CONTENT ,
+				SENDER_ID ,
+				(SELECT USER_NM FROM USER WHERE USER_ID = SENDER_ID) AS SENDER_NM ,
+				SENDER_DATE ,
+				RECEIVER_ID ,
+				(SELECT USER_NM FROM USER WHERE USER_ID = RECEIVER_ID) AS RECEIVER_NM ,
+				RECEIVER_DATE 
+			FROM  NOTE_INFORMATION  
+		) VV
+		WHERE VV.NOTE_SEQ = #{noteSeq}
+    </select>
+    
+    
+    
+    <update id="deleteSentNote">
+    	UPDATE NOTE_INFORMATION 
+    		SET SEND_DEL_YN = 'Y'
+    	WHERE NOTE_SEQ = #{num}
+    </update>
+    
+    
+    <insert id="insertSentNote">
+	    INSERT INTO NOTE_INFORMATION (
+			TITLE , 
+			CONTENT , 
+			SENDER_ID , 
+			SENDER_DATE , 
+			RECEIVER_ID , 
+			RECEIVER_DATE , 
+			SEND_DEL_YN , 
+			RECEIVE_DEL_YN
+		)
+		VALUES (
+			'' ,
+			#{content} ,
+			#{regId} , 
+			NOW() ,
+			#{id} , 
+			NOW() ,
+			'N' ,
+			'N'
+		)
+	</insert>
+    
+    
+</mapper>

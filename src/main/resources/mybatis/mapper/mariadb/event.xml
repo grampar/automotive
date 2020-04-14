@@ -1,0 +1,1021 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="event">
+    
+    <select id="getEvtStsList" resultType="kr.co.n3n.smartcity.model.CommMap">        
+		SELECT
+			EVENT_SITTN_NO ,
+			EVENT_ID ,
+			EVENT_STATUS ,
+			EVENT_DT ,
+			EVENT_STNG_DT ,
+			EVENT_ADRES ,
+			EVENT_LEGALDONG ,
+			EVENT_LATITUDE ,
+			EVENT_LONGITUDE ,
+			REGISTER_ID ,
+			REGISTER_DT ,
+			LAST_UPDUSR_ID ,
+			LAST_UPDT_DT
+		FROM EVENT_SITTN
+    </select>
+    
+    
+    <select id="selectEventList" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT
+			DISTINCT EM.EVENT_ID AS CODE_ID
+				    ,C1.CODE_NM AS CODE_NM
+		FROM ROLE_EVENT_MAPNG EM
+		LEFT JOIN EVENT_EPRESS E ON E.EVENT_ID = EM.EVENT_ID
+		LEFT JOIN CODE C1 ON C1.CODE_GROUP_ID = E.EVENT_CODE_GROUP_ID AND C1.CODE_ID = E.EVENT_CODE_ID
+		WHERE ROLE_ID IN (
+			SELECT ROLE_ID
+			FROM USER_ROLE_MAPNG
+			WHERE USER_ID = #{userId}
+		)
+		ORDER BY CODE_ID
+    </select>
+    
+    
+      
+    <!-- 119 이벤트 history    -->
+    <sql id="event119">
+    	SELECT 
+			'0' AS SEQ,
+			'119긴급영상' EVENT_NM,			
+			B.TRNSMIT_NO EVENT_NO,			 			
+			'EV01' AS EVENT_KIND_CD,
+			C.CODE_NM EVENT_ST,			 			
+			B.OCCRRNC_LC_LA AS LA,
+			B.OCCRRNC_LC_LO AS LO,			 
+			B.OCCRRNC_LC_NM AS LOC, 
+			B.OCCUR_DT
+		FROM IF_119_URGENCY_MASTER B 
+		INNER JOIN (SELECT CODE_ID, CODE_NM FROM CODE WHERE CODE_GROUP_ID='EV01' AND USE_AT='Y') C ON B.PROGRS_SE_CODE=C.CODE_ID
+    </sql>
+    
+    <sql id="event119_d">
+    	SELECT 
+			SEQ,
+			'119긴급영상' EVENT_NM,			
+			B.TRNSMIT_NO EVENT_NO,			 			
+			'EV01' AS EVENT_KIND_CD,
+			C.CODE_NM EVENT_ST,			 			
+			B.OCCRRNC_LC_LA AS LA,
+			B.OCCRRNC_LC_LO AS LO,			 
+			B.OCCRRNC_LC_NM AS LOC, 
+			B.OCCUR_DT,
+			B.TRNSMIS_MAN_ID
+		FROM IF_119_URGENCY B 
+		INNER JOIN (SELECT CODE_ID, CODE_NM FROM CODE WHERE CODE_GROUP_ID='EV01' AND USE_AT='Y') C ON B.PROGRS_SE_CODE=C.CODE_ID
+    </sql>
+    
+    
+    <!-- 112 이벤트 history    -->
+    <sql id="event112">
+		SELECT 
+			'0' AS SEQ,
+			'112 긴급영상' EVENT_NM,
+			B.INCDNT_NO EVENT_NO,
+			'EV04' AS EVENT_KIND_CD,			 
+			C.CODE_NM EVENT_ST,			 	
+			B.INCDNT_SPOT_LC_LA AS LA,
+			B.INCDNT_SPOT_LC_LO AS LO,
+			B.INCDNT_SPOT_ALL_ADRES AS LOC,
+			B.INCDNT_OCCRRNC_DT AS OCCUR_DT
+		FROM IF_112_EMRGNCY_VIDO_SPORT_MASTER B 
+		INNER JOIN (SELECT CODE_ID, CODE_NM FROM CODE WHERE CODE_GROUP_ID='EV01' AND USE_AT='Y') C ON B.PROGRS_SE_CODE=C.CODE_ID		
+    </sql>
+    
+    <sql id="event112_d">
+		SELECT 
+			SEQ,
+			'112 긴급영상' EVENT_NM,
+			B.INCDNT_NO EVENT_NO,
+			'EV04' AS EVENT_KIND_CD,			 
+			C.CODE_NM EVENT_ST,			 	
+			B.INCDNT_SPOT_LC_LA AS LA,
+			B.INCDNT_SPOT_LC_LO AS LO,
+			B.INCDNT_SPOT_ALL_ADRES AS LOC,
+			B.INCDNT_OCCRRNC_DT AS OCCUR_DT,
+			'' AS TRNSMIS_MAN_ID
+		FROM IF_112_EMRGNCY_VIDO_SPORT B 
+		INNER JOIN (SELECT CODE_ID, CODE_NM FROM CODE WHERE CODE_GROUP_ID='EV01' AND USE_AT='Y') C ON B.PROGRS_SE_CODE=C.CODE_ID		
+    </sql>
+    
+    
+     <!-- 사회적 약자  이벤트 history    -->
+    <sql id="eventSocial">
+		SELECT 
+			'0' AS SEQ,
+			'사회적약자 ' EVENT_NM,
+			B.OCCRRNC_NO EVENT_NO,
+			'EV02' AS EVENT_KIND_CD,
+			'발생' EVENT_ST, 	
+			B.INCDNT_SPOT_LC_LA AS LA,
+			B.INCDNT_SPOT_LC_LO AS LO,
+			B.INCDNT_SPOT_ALL_ADRES AS LOC,
+			B.OCCRRNC_DT AS OCCUR_DT
+		FROM IF_DSC_SUPPPORT_MASTER B
+    </sql>
+    
+    <sql id="eventSocial_d">
+		SELECT 
+			SEQ,
+			'사회적약자 ' EVENT_NM,
+			B.OCCRRNC_NO EVENT_NO,
+			'EV02' AS EVENT_KIND_CD,
+			'발생' EVENT_ST, 	
+			B.INCDNT_SPOT_LC_LA AS LA,
+			B.INCDNT_SPOT_LC_LO AS LO,
+			B.INCDNT_SPOT_ALL_ADRES AS LOC,
+			B.OCCRRNC_DT AS OCCUR_DT,
+			B.TRNSMIS_MAN_ID 
+		FROM IF_DSC_SUPPPORT B
+    </sql>
+    
+    
+    <!-- 산불발생정보    -->
+    <sql id="eventEmgFoaForest">
+    	
+		SELECT 
+			B.SEQ,			
+			'긴급재난(산불발생)' EVENT_NM,
+			B.LK_INFO_ID EVENT_NO,
+			'EV05' AS EVENT_KIND_CD,
+			'발생' EVENT_ST, 		
+			POINT_X AS LA,
+			POINT_Y AS LO,
+			LOC,
+			RCV_YMD_HMS AS OCCUR_DT
+		FROM ELI_FOA_FOREST_MAP B
+    </sql>
+    
+    
+    <!-- 우량시단위    -->
+    <sql id="eventEmgHrfRfhr">
+    	SELECT 
+			B.SEQ,			
+			'긴급재난(우량시)' EVENT_NM,
+			B.LK_INFO_ID EVENT_NO,
+			'EV06' AS EVENT_KIND_CD,
+			'발생' EVENT_ST, 			
+			POINT_X AS LA,
+			POINT_Y AS LO,
+			OBSVT_NM AS LOC,
+			RCV_YMD_HMS AS OCCUR_DT
+		FROM ELI_HRF_RFHR B
+    </sql>
+    
+    <!-- 고속도로특별상황관리 -->
+    <sql id="eventEmgKhcAcc">
+    	SELECT 
+			B.SEQ,			
+			'긴급재난(고속도로특별상황)' EVENT_NM,
+			B.LK_INFO_ID EVENT_NO,
+			'EV07' AS EVENT_KIND_CD,
+			'발생' EVENT_ST, 				
+			POINT_X AS LA,
+			POINT_Y AS LO,
+			LOC,
+			RCV_YMD_HMS AS OCCUR_DT
+		FROM ELI_KHC_ACC B
+    </sql>
+    
+    
+    <!-- 기상정보AWS -->
+    <sql id="eventEmgAws10M">
+    	SELECT 
+			B.SEQ,			
+			'긴급재난(기상정보 AWS)' EVENT_NM,
+			B.LK_INFO_ID EVENT_NO,
+			'EV08' AS EVENT_KIND_CD,
+			'발생' EVENT_ST, 		
+			POINT_X AS LA,
+			POINT_Y AS LO,
+			LOC,
+			RCV_YMD_HMS AS OCCUR_DT
+		FROM ELI_KMA_AWS_10M B
+    </sql>
+    
+    <!-- 동네예보 -->
+    <sql id="eventEmgDfsShrt">
+    	
+		SELECT 
+			B.SEQ,			
+			'긴급재난(동네 예보)' EVENT_NM,
+			B.LK_INFO_ID EVENT_NO,
+			'EV09' AS EVENT_KIND_CD,
+			'발생' EVENT_ST, 		
+			POINT_X AS LA,
+			POINT_Y AS LO,
+			LOC,
+			RCV_YMD_HMS AS OCCUR_DT
+		FROM ELI_KMA_DFS_SHRT B
+    </sql>
+    
+    <!-- 지진현황  -->
+    <sql id="eventEmgKmaEarthInfm">
+    	SELECT 
+			B.SEQ,			
+			'긴급재난(지진현황)' EVENT_NM,
+			B.LK_INFO_ID EVENT_NO,
+			'EV10' AS EVENT_KIND_CD,
+			'발생' EVENT_ST, 		
+			POINT_X AS LA,
+			POINT_Y AS LO,
+			LOC,
+			RCV_YMD_HMS AS OCCUR_DT
+		FROM ELI_KMA_EARTH_INFM	B
+    </sql>
+    
+    <!-- 기상특보 -->
+    <sql id="eventEmgKmaInform">
+    	SELECT 
+			B.SEQ,			
+			'긴급재난(기상특보)' EVENT_NM,
+			B.LK_INFO_ID EVENT_NO,
+			'EV11' AS EVENT_KIND_CD,
+			'발생' EVENT_ST, 		
+			0 LA,
+			0 LO,
+			'' LOC,
+			RCV_YMD_HMS AS OCCUR_DT 
+		FROM ELI_KMA_INFORM	B	
+    </sql>
+    
+    <!-- 응급복구장비 -->
+    <sql id="eventEmgNemEmre">
+    	SELECT 
+			B.SEQ,			
+			'긴급재난(응급복구장비)' EVENT_NM,
+			B.LK_INFO_ID EVENT_NO,
+			'EV12' AS EVENT_KIND_CD,
+			'발생' EVENT_ST, 	
+			POINT_X AS LA,
+			POINT_Y AS LO,
+			AREA_NAME AS LOC,
+			RCV_YMD_HMS AS OCCUR_DT
+		FROM ELI_NEM_EMRE B
+    </sql>
+    
+    <!-- 소방서 -->
+    <sql id="eventEmgNemFirs">
+    	SELECT 
+			B.SEQ,			
+			'긴급재난(소방서)' EVENT_NM,
+			B.LK_INFO_ID EVENT_NO,
+			'EV13' AS EVENT_KIND_CD,
+			'발생' EVENT_ST, 	
+			0 LA,
+			0 LO,
+			AREA_ADDR AS LOC,
+			RCV_YMD_HMS AS OCCUR_DT
+		FROM ELI_NEM_FIRS B
+    </sql>
+    
+    <!-- 시가지도로돌발 상황정보 -->
+    <sql id="eventEmgRtsaOccurid">
+    	SELECT 
+			B.SEQ,			
+			'긴급재난(시가지도록돌발상황)' EVENT_NM,
+			B.LK_INFO_ID EVENT_NO,
+			'EV14' AS EVENT_KIND_CD,
+			'발생' EVENT_ST, 	
+			0 LA,
+			0 LO,
+			ROAD_NAME AS LOC,
+			RCV_YMD_HMS AS OCCUR_DT
+		FROM ELI_RTSA_OCCURID B
+    </sql>
+    
+    <select id="eventStatusHistoryListPage" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT 
+    		SEQ,			
+			EVENT_NM,
+			EVENT_NO,
+			EVENT_KIND_CD,
+			EVENT_ST, 	
+			LA,
+			LO,
+			LOC,
+			STR_TO_DATE(OCCUR_DT  , '%Y%m%d%H%i%s') OCCUR_DT 
+			
+    	FROM
+    	(        
+			<include refid="event119" />
+			UNION ALL
+			<include refid="event112" />
+			UNION ALL
+			<include refid="eventSocial" />
+			UNION ALL
+			<include refid="eventEmgFoaForest" />
+			UNION ALL
+			<include refid="eventEmgHrfRfhr" />
+			UNION ALL
+			<include refid="eventEmgKhcAcc" />
+			UNION ALL
+			<include refid="eventEmgAws10M" />
+			UNION ALL
+			<include refid="eventEmgDfsShrt" />
+			UNION ALL
+			<include refid="eventEmgKmaEarthInfm" />
+			UNION ALL
+			<include refid="eventEmgKmaInform" />	
+			UNION ALL
+			<include refid="eventEmgNemEmre" />
+			UNION ALL
+			<include refid="eventEmgNemFirs" />
+			UNION ALL
+			<include refid="eventEmgRtsaOccurid" />	
+		) A 
+		WHERE 1=1
+		
+		<choose>
+			<when test="eventNm != null and eventNm != ''">
+				AND A.EVENT_KIND_CD = #{eventNm}
+			</when>
+			<otherwise>
+				AND A.EVENT_KIND_CD IN (
+					SELECT
+				 		EM.EVENT_ID 
+					FROM ROLE_EVENT_MAPNG EM
+						LEFT JOIN EVENT_EPRESS E ON E.EVENT_ID = EM.EVENT_ID
+						LEFT JOIN CODE C1 ON C1.CODE_GROUP_ID = E.EVENT_CODE_GROUP_ID AND C1.CODE_ID = E.EVENT_CODE_ID
+					WHERE ROLE_ID IN (
+							SELECT ROLE_ID
+							FROM USER_ROLE_MAPNG
+							WHERE USER_ID = #{userId}
+					)
+				)
+			</otherwise>
+		</choose>
+		
+		<if test="startDateTime != null and startDateTime != '' and endDateTime != null and endDateTime != ''">
+		  AND A.OCCUR_DT BETWEEN #{startDateTime} AND #{endDateTime}
+		</if>
+		ORDER BY OCCUR_DT DESC
+		
+		<if test="startNum != null and startNum != ''">
+			LIMIT #{startNum}, #{pageCnt}
+		</if>
+		
+			
+    </select>
+    
+    <select id="eventStatusHistoryListPageCnt" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT 
+    		COUNT(1) AS TOTAL_COUNT
+    	FROM
+    	(        
+			<include refid="event119" />
+			UNION ALL
+			<include refid="event112" />
+			UNION ALL
+			<include refid="eventSocial" />
+			UNION ALL
+			<include refid="eventEmgFoaForest" />
+			UNION ALL
+			<include refid="eventEmgHrfRfhr" />
+			UNION ALL
+			<include refid="eventEmgKhcAcc" />
+			UNION ALL
+			<include refid="eventEmgAws10M" />
+			UNION ALL
+			<include refid="eventEmgDfsShrt" />
+			UNION ALL
+			<include refid="eventEmgKmaEarthInfm" />
+			UNION ALL
+			<include refid="eventEmgKmaInform" />	
+			UNION ALL
+			<include refid="eventEmgNemEmre" />
+			UNION ALL
+			<include refid="eventEmgNemFirs" />
+			UNION ALL
+			<include refid="eventEmgRtsaOccurid" />	
+		) A 
+		WHERE 1=1
+		
+		<choose>
+			<when test="eventNm != null and eventNm != ''">
+				AND A.EVENT_KIND_CD = #{eventNm}
+			</when>
+			<otherwise>
+				AND A.EVENT_KIND_CD IN (
+					SELECT
+				 		EM.EVENT_ID 
+					FROM ROLE_EVENT_MAPNG EM
+						LEFT JOIN EVENT_EPRESS E ON E.EVENT_ID = EM.EVENT_ID
+						LEFT JOIN CODE C1 ON C1.CODE_GROUP_ID = E.EVENT_CODE_GROUP_ID AND C1.CODE_ID = E.EVENT_CODE_ID
+					WHERE ROLE_ID IN (
+							SELECT ROLE_ID
+							FROM USER_ROLE_MAPNG
+							WHERE USER_ID = #{userId}
+					)
+				)
+			</otherwise>
+		</choose>
+		
+		<if test="startDateTime != null and startDateTime != '' and endDateTime != null and endDateTime != ''">
+		  AND A.OCCUR_DT BETWEEN #{startDateTime} AND #{endDateTime}
+		</if>
+			
+    </select>
+   
+   
+   
+   
+   <select id="eventStatusHistoryPopListPage" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT 
+    		SEQ,			
+			EVENT_NM,
+			EVENT_NO,
+			EVENT_KIND_CD,
+			EVENT_ST, 	
+			LA,
+			LO,
+			LOC,
+			STR_TO_DATE(OCCUR_DT  , '%Y%m%d%H%i%s') OCCUR_DT,
+			TRNSMIS_MAN_ID 
+			
+    	FROM
+    	(        
+			<include refid="event119_d" />
+			UNION ALL
+			<include refid="event112_d" />
+			UNION ALL
+			<include refid="eventSocial_d" />
+		) A 
+		WHERE 1=1
+		<if test="eventNo != null and eventNo != ''">
+		  AND A.EVENT_NO = #{eventNo}
+		</if>
+		ORDER BY OCCUR_DT DESC
+		<if test="startNum != null and startNum != ''">
+			LIMIT #{startNum}, #{pageCnt}
+		</if>
+    </select>
+    
+    <select id="eventStatusHistoryPopListPageCnt" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT 
+    		COUNT(1) AS TOTAL_COUNT
+    	FROM
+    	(        
+			<include refid="event119_d" />
+			UNION ALL
+			<include refid="event112_d" />
+			UNION ALL
+			<include refid="eventSocial_d" />
+		) A 
+		WHERE 1=1
+		<if test="eventNo != null and eventNo != ''">
+		  AND A.EVENT_NO = #{eventNo}
+		</if>
+    </select>
+    
+    
+    
+    
+    <select id="eventStatusHistoryOne" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT 
+    		SEQ,			
+			EVENT_NM,
+			EVENT_NO,
+			EVENT_KIND_CD,
+			EVENT_ST, 	
+			LA,
+			LO,
+			LOC,
+			STR_TO_DATE(OCCUR_DT  , '%Y%m%d%H%i%s') OCCUR_DT 
+    	FROM
+    	(        
+			<include refid="event119" />
+			UNION
+			<include refid="event112" />
+			UNION
+			<include refid="eventSocial" />
+		) A 
+		WHERE 1=1
+		<if test="eventNo != null and eventNo != ''">
+		  AND A.EVENT_NO = #{eventNo} 
+		</if>
+    </select>
+    
+    
+    
+    
+    
+    <select id="selectEventDetailE01" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT 
+			ECTCC_SE_CODE,
+			PROGRS_SE_CODE,
+			PROGRS_DT,
+			TRNSMIT_SYS,
+			RECPTN_SYS,
+			SNDNG_DT,
+			TRNSMIT_NO,
+			ASORT_NM,
+			ASORT_DETAIL_NM,
+			OCCRRNC_LC_LO,
+			OCCRRNC_LC_LA,
+			OCCRRNC_LC_NM,
+			LEGALDONG_CODE_CITY,
+			OCCUR_DT,
+			TRNSMIS_MAN_ID,
+			EVENT_SITTN_SEQ
+		FROM IF_119_URGENCY
+		WHERE SEQ = #{seq}
+    </select>
+    
+    
+    <select id="selectEventDetailE02" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT 
+			ECTCC_SE_CODE ,
+			PROGRS_SE_CODE,
+			LOGIN_DT ,
+			TRNSMIT_SYS ,
+			RECPTN_SYS ,
+			SNDNG_DT,
+			OCCRRNC_NO ,
+			SVC_TY ,
+			INCDNT_SPOT_LC_LO ,
+			INCDNT_SPOT_LC_LA ,
+			INCDNT_SPOT_ALL_ADRES,
+			AREA_CODE ,
+			Ref_ID,
+			NAME ,
+			MOBLPHON_NO,
+			BIRTH_DATE ,
+			SEXDSTN ,
+			ADRES_DWLSIT ,
+			PRTCTOR_NM ,
+			PRTCTOR_MOBLPHON ,
+			OCCRRNC_DT ,
+			APPRNC_INFO ,
+			PARTCLR_MATTER,
+			TRNSMIS_MAN_ID ,
+			EVENT_SITTN_SEQ ,
+			IMAGE
+		FROM IF_DSC_SUPPPORT
+		WHERE SEQ = #{seq}
+    </select>
+    
+    <resultMap id="imgBlob" type="kr.co.n3n.smartcity.model.CommMap">
+    	<result column="IMAGE" property="IMAGE" jdbcType="BLOB" javaType="_byte[]"/>
+    </resultMap>
+    <select id="selectEventDetailE02_img"  resultMap="imgBlob">
+    	SELECT 
+			IMAGE
+		FROM IF_DSC_SUPPPORT
+		WHERE SEQ = #{seq}
+    </select>
+    
+    
+    <select id="selectEventDetailE03" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT 
+			EVT_OCR_NO,
+			RECEPT_YMD ,
+			MTMDA_PRCS_TY_CD ,
+			MTMDA_PRCS_STATE ,
+			TITLE ,
+			IMG_START_YMD_HMS ,
+			IMG_END_YMD_HMS,
+			POINT_X ,
+			POINT_Y ,
+			ADRES_NM ,
+			CONTS ,
+			RECEPT_PRCS_YN,
+			RECEPT_PRCS_YMD_HMS ,
+			FILE_ID_RETURN_YMD_HMS ,
+			RGS_DATE ,
+			RECEPT_NM ,
+			RECEPT_TELNO ,
+			RECV_NO ,
+			UPD_DATE ,
+			EVENT_SITTN_SEQ 
+		FROM  IF_ES_112_MTMDA_RECEPT  
+		WHERE SEQ = #{seq}
+    </select>
+    
+    <select id="selectEventDetailE04" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT 
+			ECTCC_SE_CODE ,
+			PROGRS_SE_CODE ,
+			PROGRS_DT ,
+			TRNSMIT_SYS ,
+			RECPTN_SYS ,
+			SNDNG_DT ,
+			INCDNT_NO ,
+			ACDNT_GRAD ,
+			ACDNT_TY ,
+			INCDNT_SPOT_LC_LO ,
+			INCDNT_SPOT_LC_LA ,
+			INCDNT_SPOT_ALL_ADRES ,
+			AREA_CODE ,
+			INCDNT_OCCRRNC_DT ,
+			USER_ID ,
+			EVENT_SITTN_SEQ 
+		FROM  IF_112_EMRGNCY_VIDO_SPORT 
+		WHERE SEQ = #{seq}
+    </select>
+    
+    <select id="selectEventDetailE05" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT 
+			LK_INFO_ID ,
+			RCV_YMD_HMS ,
+			SEQ_NO,
+			TP_STATUS,
+			POINT_X ,
+			POINT_Y ,
+			LOC ,
+			RCV_YMDHM ,
+			EVENT_SITTN_SEQ 
+		FROM  ELI_FOA_FOREST_MAP 
+		WHERE SEQ = #{seq}
+    </select>
+    
+    <select id="selectEventDetailE06" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT 
+			LK_INFO_ID ,
+			RCV_YMD_HMS ,
+			SEQ_NO ,
+			OBSVT_ID ,
+			OBSVT_NM ,
+			RFHR_STATUS ,
+			OBSVT_YMDHM ,
+			HRRF ,
+			POINT_X ,
+			POINT_Y ,
+			EVENT_SITTN_SEQ 
+		FROM  ELI_HRF_RFHR 
+		WHERE SEQ = #{seq}
+    </select>
+    
+    <select id="selectEventDetailE07" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT 
+			LK_INFO_ID ,
+			RCV_YMD_HMS,
+			SEQ_NO ,
+			END_YN,
+			LOC ,
+			YMDHM ,
+			UPDN ,
+			STAT ,
+			POINT_X ,
+			POINT_Y,
+			G_ID ,
+			EVENT_SITTN_SEQ
+		FROM   ELI_KHC_ACC 
+		WHERE SEQ = #{seq}
+    </select>
+    
+    <select id="selectEventDetailE08" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT 
+			LK_INFO_ID,
+			RCV_YMD_HMS ,
+			SEQ_NO ,
+			OBSVT_YMDHM ,
+			POINT_X ,
+			POINT_Y ,
+			LOC ,
+			OBSVT_ADDR,
+			AWS_LVL_TP ,
+			AWS_LVL,
+			WIND ,
+			WS ,
+			TA ,
+			QTY_DAY,
+			EVENT_SITTN_SEQ
+		FROM  ELI_KMA_AWS_10M 
+		WHERE SEQ = #{seq}
+    </select>
+    
+    <select id="selectEventDetailE09" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT 
+			LK_INFO_ID,
+			RCV_YMD_HMS,
+			SEQ_NO ,
+			FC_YMDHM ,
+			LOC ,
+			POINT_X ,
+			POINT_Y ,
+			RAIN_1 ,
+			RAIN_2 ,
+			RAIN_3 ,
+			RAIN_4 ,
+			RAIN_5,
+			WAD_1 ,
+			WAD_2 ,
+			WAD_3 ,
+			WAD_4 ,
+			WAD_5 ,
+			TEM_1 ,
+			TEM_2 ,
+			TEM_3 ,
+			TEM_4 ,
+			TEM_5 ,
+			HUM_1 ,
+			HUM_2 ,
+			HUM_3 ,
+			HUM_4 ,
+			HUM_5 ,
+			EVENT_SITTN_SEQ 
+		FROM  ELI_KMA_DFS_SHRT 
+		WHERE SEQ = #{seq}
+    </select>
+    
+    <select id="selectEventDetailE10" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT 
+			LK_INFO_ID,
+			RCV_YMD_HMS,
+			SEQ_NO ,
+			OCR_YMDHMS ,
+			POINT_X ,
+			POINT_Y ,
+			LOC ,
+			EARTH_INFM_SCLE ,
+			EARTH_INFM_NO_ORD ,
+			EARTH_INFM_NO_REF ,
+			EARTH_INFM_CD_STN
+		FROM  ELI_KMA_EARTH_INFM 
+		WHERE SEQ = #{seq}
+    </select>
+    
+    <select id="selectEventDetailE11" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT 
+			LK_INFO_ID ,
+			RCV_YMD_HMS,
+			SEQ_NO ,
+			KMA_YMDHMS ,
+			KMA_SEQ_NO ,
+			KMA_TITLE ,
+			KMA_STAT_CTNT ,
+			KMA_SECT_AREA ,
+			KMA_PW_VL ,
+			KMA_CD_STN ,
+			EVENT_SITTN_SEQ
+		FROM  ELI_KMA_INFORM  
+		WHERE SEQ = #{seq}
+    </select>
+    
+    <select id="selectEventDetailE12" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT 
+			LK_INFO_ID ,
+			RCV_YMD_HMS ,
+			SEQ_NO ,
+			ASEQ_NO ,
+			EQUP_CD ,
+			EQUP_NAME ,
+			AMT ,
+			AREA_CD ,
+			AREA_NAME ,
+			AREA_CD_H ,
+			COMPANY ,
+			OWNER_NAME ,
+			POINT_X ,
+			POINT_Y ,
+			EVENT_SITTN_SEQ
+		FROM  ELI_NEM_EMRE  
+		WHERE SEQ = #{seq}
+    </select>
+    
+    <select id="selectEventDetailE13" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT 
+			LK_INFO_ID ,
+			RCV_YMD_HMS ,
+			SEQ_NO ,
+			FIRS_ID ,
+			FIRS_NM ,
+			AREA_CD ,
+			AREA_ADDR ,
+			CD_GIS ,
+			TEL ,
+			FAX ,
+			EVENT_SITTN_SEQ 
+		FROM  ELI_NEM_FIRS  
+		WHERE SEQ = #{seq}
+    </select>
+    
+    <select id="selectEventDetailE14" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT 
+			LK_INFO_ID,
+			RCV_YMD_HMS,
+			SEQ_NO,
+			STD_LINK_ID,
+			ROAD_NAME,
+			MEASURE_TIME,
+			TYPE_OTHER,
+			RGS_DATE,
+			EVENT_SITTN_SEQ 
+		FROM  ELI_RTSA_OCCURID  
+		WHERE SEQ = #{seq}
+    </select>
+    
+    
+    
+    
+    <select id="scrambleOrderListPage" resultType="kr.co.n3n.smartcity.model.CommMap">        
+		
+		SELECT 
+			EVT_OCR_NO,
+			RECEPT_YMD ,
+			STR_TO_DATE(RECEPT_YMD , '%Y%m%d') AS RECEPT_YMD_VIEW ,
+			MTMDA_PRCS_TY_CD ,
+			MTMDA_PRCS_STATE ,
+			(SELECT CODE_NM FROM CODE CD WHERE CD.CODE_GROUP_ID = 'EM03' AND CD.CODE_ID = MTMDA_PRCS_STATE) AS MTMDA_PRCS_STATE_NM ,
+			TITLE ,
+			IMG_START_YMD_HMS ,
+			IMG_END_YMD_HMS,
+			POINT_X ,
+			POINT_Y ,
+			ADRES_NM ,
+			CONTS ,
+			RECEPT_PRCS_YN,
+			RECEPT_PRCS_YMD_HMS ,
+			FILE_ID_RETURN_YMD_HMS ,
+			RGS_DATE ,
+			RECEPT_NM ,
+			RECEPT_TELNO ,
+			RECV_NO ,
+			UPD_DATE ,
+			EVENT_SITTN_SEQ 
+		FROM  IF_ES_112_MTMDA_RECEPT  
+		WHERE 1=1
+		
+		<if test="evtOcrNo != null and evtOcrNo != ''">
+		  AND EVT_OCR_NO LIKE CONCAT('%' , #{evtOcrNo} , '%')
+		</if>
+		<if test="title != null and title != ''">
+		  AND TITLE LIKE CONCAT('%' , #{title} , '%')
+		</if>
+		<if test="startDateTime != null and startDateTime != '' and endDateTime != null and endDateTime != ''">
+		  AND STR_TO_DATE(RECEPT_YMD , '%Y%m%d') BETWEEN STR_TO_DATE(#{startDateTime} , '%Y%m%d') AND  STR_TO_DATE(#{endDateTime} , '%Y%m%d')
+		</if>
+		ORDER BY RGS_DATE DESC
+		<if test="startNum != null and startNum != ''">
+			LIMIT #{startNum}, #{pageCnt}
+		</if>
+
+    </select>
+    
+     
+    
+    <select id="scrambleOrderListPageCnt" resultType="kr.co.n3n.smartcity.model.CommMap"> 
+    	
+    	SELECT 
+			COUNT(*) AS TOTAL_COUNT
+		FROM  IF_ES_112_MTMDA_RECEPT  
+		WHERE 1=1
+		
+		<if test="evtOcrNo != null and evtOcrNo != ''">
+		  AND EVT_OCR_NO LIKE CONCAT('%' , #{evtOcrNo} , '%')
+		</if>
+		<if test="title != null and title != ''">
+		  AND TITLE LIKE CONCAT('%' , #{title} , '%')
+		</if>
+		<if test="startDateTime != null and startDateTime != '' and endDateTime != null and endDateTime != ''">
+		  AND STR_TO_DATE(RECEPT_YMD , '%Y%m%d') BETWEEN STR_TO_DATE(#{startDateTime} , '%Y%m%d') AND  STR_TO_DATE(#{endDateTime} , '%Y%m%d')
+		</if>
+		  
+    </select>
+    
+    
+    
+    <insert id="insertScrambleOrder">
+    	INSERT INTO IF_ES_112_MTMDA_RECEPT (
+			EVT_OCR_NO,
+			RECEPT_YMD,
+			MTMDA_PRCS_TY_CD,
+			MTMDA_PRCS_STATE,
+			TITLE,
+			IMG_START_YMD_HMS,
+			IMG_END_YMD_HMS,
+			
+			POINT_X,
+			POINT_Y,
+			ADRES_NM,
+			CONTS,
+			
+			RGS_DATE,
+			RECEPT_NM,
+			RECEPT_TELNO,
+			
+			RECEPT_PRCS_YN,
+			UPD_DATE
+		)
+		VALUES (
+			#{evtOcrNoIns},
+			#{receprYMDIns},
+			'20',
+			#{mtmdaPrcsState},
+			#{titleIns},
+			#{imgStartYMDHmsIns},
+			#{imgEndYMDHmsIns},
+			
+			#{pointXIns},
+			#{pointYIns},
+			#{adresNmIns},
+			#{contsIns},
+			
+			NOW(),
+			#{receptNmIns},
+			#{receptTelnoIns},
+			
+			'N',
+			NOW()
+		)
+    </insert>
+    
+    
+    
+    <insert id="insertScrambleOrderFile">
+    	INSERT INTO IF_ES_112_MTMDA_RECEPT_ATCH (
+			EVT_OCR_NO , SEQ_NO , FILE_ID , IMG_URL , IMG_TY_CD
+		)
+		VALUES(
+			#{evtOcrNoIns} , #{seqNo} , '' , #{fileName} , '0'
+		)
+    </insert>
+    
+    
+    
+    <delete id="deleteScrambleOrder">
+    	DELETE FROM IF_ES_112_MTMDA_RECEPT WHERE EVT_OCR_NO = #{num}
+    </delete>
+    
+    
+    <select id="selectScrambleOrderDetail" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT 
+			EVT_OCR_NO,
+			STR_TO_DATE(RECEPT_YMD , '%Y%m%d') AS RECEPT_YMD ,
+			MTMDA_PRCS_TY_CD ,
+			MTMDA_PRCS_STATE ,
+			(SELECT CODE_NM FROM CODE CD WHERE CD.CODE_GROUP_ID = 'EM03' AND CD.CODE_ID = MTMDA_PRCS_STATE) AS MTMDA_PRCS_STATE_NM ,
+			TITLE ,
+			STR_TO_DATE(IMG_START_YMD_HMS , '%Y%m%d%H%i%s') AS IMG_START_YMD_HMS ,
+			STR_TO_DATE(IMG_END_YMD_HMS , '%Y%m%d%H%i%s') AS IMG_END_YMD_HMS,
+			POINT_X ,
+			POINT_Y ,
+			ADRES_NM ,
+			CONTS ,
+			RECEPT_PRCS_YN,
+			STR_TO_DATE(RECEPT_PRCS_YMD_HMS , '%Y%m%d%H%i%s') AS RECEPT_PRCS_YMD_HMS ,
+			STR_TO_DATE(FILE_ID_RETURN_YMD_HMS , '%Y%m%d%H%i%s') AS FILE_ID_RETURN_YMD_HMS ,
+			RGS_DATE ,
+			RECEPT_NM ,
+			RECEPT_TELNO ,
+			RECV_NO ,
+			UPD_DATE , 
+			STR_TO_DATE(RET_YMDHMS , '%Y%m%d%H%i%s') AS RET_YMDHMS
+		FROM  IF_ES_112_MTMDA_RECEPT  
+		WHERE EVT_OCR_NO = #{evtOcrNo}
+    </select>
+    
+    
+    <select id="selectScrambleOrderFiles" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT
+			EVT_OCR_NO , SEQ_NO , FILE_ID , IMG_URL , IMG_TY_CD
+		FROM IF_ES_112_MTMDA_RECEPT_ATCH
+		WHERE EVT_OCR_NO = #{evtOcrNo}
+    </select>
+    
+    <select id="selectScrambleOrderFilesCnt" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT 
+			IFNULL(MAX(SEQ_NO) + 1 , 1) AS FILE_CNT
+		FROM IF_ES_112_MTMDA_RECEPT_ATCH
+		WHERE EVT_OCR_NO = #{evtOcrNo}
+    </select>
+    
+    
+    <update id="updateScrambleOrder">
+    
+    	UPDATE IF_ES_112_MTMDA_RECEPT
+		SET
+			TITLE = #{titleIns} ,
+			IMG_START_YMD_HMS = #{imgStartYMDHmsIns} ,
+			IMG_END_YMD_HMS = #{imgEndYMDHmsIns} ,
+			
+			<if test="mtmdaPrcsState != null and mtmdaPrcsState != ''">
+				MTMDA_PRCS_STATE = #{mtmdaPrcsState} ,
+			</if>
+			
+			POINT_X = #{pointXIns} ,
+			POINT_Y = #{pointYIns} ,
+			ADRES_NM = #{adresNmIns} ,
+			CONTS= #{contsIns} ,
+			
+			RECEPT_NM = #{receptNmIns},
+			RECEPT_TELNO = #{receptTelnoIns} ,
+			
+			UPD_DATE = NOW()
+		WHERE EVT_OCR_NO = #{evtOcrNoIns}
+    
+    </update>
+    
+    
+    <delete id="deleteScrambleOrderFile">
+    	DELETE FROM IF_ES_112_MTMDA_RECEPT_ATCH WHERE EVT_OCR_NO = #{num}
+    </delete>
+    
+    
+</mapper>

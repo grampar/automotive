@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="logConect">
+	
+	<select id="getConectLogList" resultType="kr.co.n3n.smartcity.model.CommMap">
+		SELECT
+			LH.USER_ID
+			,U.USER_NM
+			,UG.USER_GROUP_ID
+			,UG.USER_GROUP_NM
+			,DATE_FORMAT(LH.CONECT_DT,'%Y-%m-%d %T') AS CONECT_DT
+		FROM LOG_HIST LH
+		LEFT JOIN USER U ON U.USER_ID = LH.USER_ID
+		LEFT JOIN USER_GROUP UG ON UG.USER_GROUP_ID = U.USER_GROUP_ID
+		WHERE 1 = 1
+		AND LH.CONECT_DT BETWEEN CONCAT(#{startDt},' ',#{startTm}) AND CONCAT(#{endDt},' ',#{endTm})
+		<choose>
+			<when test="session.grCodeId != 'RG03'">
+				AND LH.USER_ID IN (
+					SELECT 
+						DISTINCT U.USER_ID
+					FROM USER U
+					LEFT JOIN USER_ROLE_MAPNG UM ON U.USER_ID = UM.USER_ID
+					LEFT JOIN ROLE R ON R.ROLE_ID = UM.ROLE_ID
+					WHERE R.SD_CODE_ID IN (
+						SELECT
+							DISTINCT EE.SD_CODE_ID
+						FROM USER U
+						LEFT JOIN USER_ROLE_MAPNG UM ON U.USER_ID = UM.USER_ID
+						LEFT JOIN ROLE R ON R.ROLE_ID = UM.ROLE_ID
+						LEFT JOIN ROLE_EVENT_MAPNG EM ON R.ROLE_ID = EM.ROLE_ID
+						LEFT JOIN EVENT_EPRESS EE ON EM.EVENT_ID = EE.EVENT_ID
+						WHERE U.USER_ID = #{session.userId}
+					)
+					AND U.USE_AT = 'Y'
+				)
+			</when>
+		</choose>
+		
+		<if test="keyword != null and keyword != ''">
+			AND (LH.USER_ID LIKE CONCAT('%',#{keyword},'%') OR U.USER_NM LIKE CONCAT('%',#{keyword},'%'))
+		</if>
+		ORDER BY LH.CONECT_DT DESC
+		<if test="startNum != null and startNum != ''">
+			LIMIT #{startNum}, #{pageCnt}
+		</if>
+	</select>
+	
+	<select id="getConectLogListCnt" resultType="kr.co.n3n.smartcity.model.CommMap">
+		SELECT
+			COUNT(*) AS TOTAL_COUNT
+		FROM LOG_HIST LH
+		LEFT JOIN USER U ON U.USER_ID = LH.USER_ID
+		LEFT JOIN USER_GROUP UG ON UG.USER_GROUP_ID = U.USER_GROUP_ID
+		WHERE 1 = 1
+		AND LH.CONECT_DT BETWEEN CONCAT(#{startDt},' ',#{startTm}) AND CONCAT(#{endDt},' ',#{endTm})
+		<choose>
+			<when test="session.grCodeId != 'RG03'">
+				AND LH.USER_ID IN (
+					SELECT 
+						DISTINCT U.USER_ID
+					FROM USER U
+					LEFT JOIN USER_ROLE_MAPNG UM ON U.USER_ID = UM.USER_ID
+					LEFT JOIN ROLE R ON R.ROLE_ID = UM.ROLE_ID
+					WHERE R.SD_CODE_ID IN (
+						SELECT
+							DISTINCT EE.SD_CODE_ID
+						FROM USER U
+						LEFT JOIN USER_ROLE_MAPNG UM ON U.USER_ID = UM.USER_ID
+						LEFT JOIN ROLE R ON R.ROLE_ID = UM.ROLE_ID
+						LEFT JOIN ROLE_EVENT_MAPNG EM ON R.ROLE_ID = EM.ROLE_ID
+						LEFT JOIN EVENT_EPRESS EE ON EM.EVENT_ID = EE.EVENT_ID
+						WHERE U.USER_ID = #{session.userId}
+					)
+					AND U.USE_AT = 'Y'
+				)
+			</when>
+		</choose>
+		<if test="keyword != null and keyword != ''">
+			AND (LH.USER_ID LIKE CONCAT('%',#{keyword},'%') OR U.USER_NM LIKE CONCAT('%',#{keyword},'%'))
+		</if>
+	</select>
+</mapper>

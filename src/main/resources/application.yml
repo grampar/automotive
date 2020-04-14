@@ -1,0 +1,10 @@
+    
+spring:     
+  profiles:
+    #active: production  
+    active: development
+     
+  #mvc: 
+  #  view: 
+  #    prefix: /WEB-INF/views/
+  #    suffix: .jsp    pc

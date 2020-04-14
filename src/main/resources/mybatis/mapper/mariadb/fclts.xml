@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="fclts">
+	
+	<select id="getFcltsList" resultType="kr.co.n3n.smartcity.model.CommMap">
+		SELECT 
+			F.FACILITIES_ID
+			,F.FACILITIES_NAME
+			,F.FCLTS_GROUP_CODE
+			,F.FCLTS_CODE
+			,C1.CODE_NM AS FCLTS_CODE_NM
+			,F.STATUS
+			,C2.CODE_NM AS STATUS_NM
+			,F.ESNTL_IDNTFC_NO
+			,F.LATITUDE
+			,F.LONGITUDE
+			,F.EXPRESSION_BREADTH
+			,F.EXPRESSION_HEIGHT
+			,F.LOCATION_INFORMATION_X
+			,F.LOCATION_INFORMATION_Y
+			,F.FACILITIES_URL
+			,F.DESCRIPTION
+			,F.BITRATE
+			,F.CODEC
+			,F.USE_PTZ
+			,F.PTZ_DRIVER
+			,F.USE_RDS
+			,F.OBJECT_TYPE
+			,F.RTSP_ID
+			,F.RTSP_PW
+			,F.MEDIA_SERVER
+			,F.CONNECT_MODE
+			,F.FPS
+		FROM FACILITIES F
+		LEFT JOIN CODE C1 ON C1.CODE_ID = F.FCLTS_CODE AND C1.CODE_GROUP_ID = F.FCLTS_GROUP_CODE
+		LEFT JOIN CODE C2 ON C2.CODE_ID = F.STATUS AND C2.CODE_GROUP_ID = 'FS01'
+		WHERE 1 = 1
+		<if test="keyword != null and keyword != ''">
+			AND F.FACILITIES_NAME LIKE CONCAT('%',#{keyword},'%')
+		</if>
+		<if test="fcltsCode != null and fcltsCode != ''">
+			AND F.FCLTS_CODE = #{fcltsCode}
+		</if>
+		ORDER BY F.REGISTER_DT DESC
+		<if test="startNum != null and startNum != ''">
+			LIMIT #{startNum}, #{pageCnt}
+		</if>
+	</select>
+	
+	<select id="getFcltsListCnt" resultType="kr.co.n3n.smartcity.model.CommMap">
+		SELECT 
+			COUNT(*) AS TOTAL_COUNT
+		FROM FACILITIES
+		WHERE 1 = 1
+		<if test="keyword != null and keyword != ''">
+			AND FACILITIES_NAME LIKE CONCAT('%',#{keyword},'%')
+		</if>
+		<if test="fcltsCode != null and fcltsCode != ''">
+			AND FCLTS_CODE = #{fcltsCode}
+		</if>
+	</select>
+	
+	<select id="selectFcltsId" resultType="kr.co.n3n.smartcity.model.CommMap">
+		SELECT CONCAT('FA' , LPAD(RIGHT(ifnull(MAX(FACILITIES_ID),00000000000000000),18) + 1,18,0) ) AS FACILITIES_ID FROM FACILITIES
+	</select>
+	
+	<select id="selectUseFclts" resultType="kr.co.n3n.smartcity.model.CommMap">
+		SELECT
+			ESNTL_IDNTFC_NO
+		FROM FACILITIES
+		WHERE ESNTL_IDNTFC_NO = #{esntlIdntfcNo}
+	</select>
+	
+	<insert id="insertFclts">
+		INSERT INTO FACILITIES(
+			FACILITIES_ID
+			,FACILITIES_NAME
+			,FCLTS_GROUP_CODE
+			,FCLTS_CODE
+			,ESNTL_IDNTFC_NO
+			,LATITUDE
+			,LONGITUDE
+			,GEO_POINT
+			,EXPRESSION_BREADTH
+			,EXPRESSION_HEIGHT
+			,LOCATION_INFORMATION_X
+			,LOCATION_INFORMATION_Y
+			,FACILITIES_URL
+			<if test="description != null">,DESCRIPTION</if>
+			<if test="bitrate != null">,BITRATE</if>
+			<if test="codec != null">,CODEC</if>
+			<if test="usePtz != null">,USE_PTZ</if>
+			<if test="ptzDriver != null">,PTZ_DRIVER</if>
+			<if test="useRds != null">,USE_RDS</if>
+			<if test="objectType != null">,OBJECT_TYPE</if>
+			<if test="rtspId != null">,RTSP_ID</if>
+			<if test="rtspPw != null">,RTSP_PW</if>
+			<if test="mediaServer != null">,MEDIA_SERVER</if>
+			<if test="connectMode != null">,CONNECT_MODE</if>
+			<if test="fps != null">,FPS</if>
+			<if test="status != null">,STATUS</if>
+			,REGISTER_ID
+			,REGISTER_DT
+			,LAST_UPDUSR_ID
+			,LAST_UPDT_DT
+		)VALUES(
+			#{facilitiesId}
+			,#{facilitiesName}
+			,#{fcltsGroupCode}
+			,#{fcltsCode}
+			,#{esntlIdntfcNo}
+			,#{latitude}
+			,#{longitude}
+			,POINT(#{longitude},#{latitude})
+			,#{expressionBreadth}
+			,#{expressionHeight}
+			,#{locationInformationX}
+			,#{locationInformationY}
+			,#{facilitiesUrl}
+			<if test="description != null">,#{description}</if>
+			<if test="bitrate != null">,#{bitrate}</if>
+			<if test="codec != null">,#{codec}</if>
+			<if test="usePtz != null">,#{usePtz}</if>
+			<if test="ptzDriver != null">,#{ptzDriver}</if>
+			<if test="useRds != null">,#{useRds}</if>
+			<if test="objectType != null">,#{objectType}</if>
+			<if test="rtspId != null">,#{rtspId}</if>
+			<if test="rtspPw != null">,#{rtspPw}</if>
+			<if test="mediaServer != null">,#{mediaServer}</if>
+			<if test="connectMode != null">,#{connectMode}</if>
+			<if test="fps != null">,#{fps}</if>
+			<if test="status != null">,#{status}</if>
+			,#{registerId}
+			,NOW()
+			,#{registerId}
+			,NOW()
+		)
+	</insert>
+	
+	<update id="updateFclts">
+		UPDATE FACILITIES
+		<set>
+			FACILITIES_NAME = #{facilitiesName}
+			,FCLTS_GROUP_CODE = #{fcltsGroupCode}
+			,FCLTS_CODE = #{fcltsCode}
+			,ESNTL_IDNTFC_NO = #{esntlIdntfcNo}
+			,LATITUDE = #{latitude}
+			,LONGITUDE = #{longitude}
+			,GEO_POINT = POINT(#{longitude},#{latitude})
+			,EXPRESSION_BREADTH = #{expressionBreadth}
+			,EXPRESSION_HEIGHT = #{expressionHeight}
+			,LOCATION_INFORMATION_X = #{locationInformationX}
+			,LOCATION_INFORMATION_Y = #{locationInformationY}
+			,FACILITIES_URL = #{facilitiesUrl}
+			<if test="description != null">,DESCRIPTION = #{description}</if>
+			<if test="bitrate != null">,BITRATE = #{bitrate}</if>
+			<if test="codec != null">,CODEC = #{codec}</if>
+			<if test="usePtz != null">,USE_PTZ = #{usePtz}</if>
+			<if test="ptzDriver != null">,PTZ_DRIVER = #{ptzDriver}</if>
+			<if test="useRds != null">,USE_RDS = #{useRds}</if>
+			<if test="objectType != null">,OBJECT_TYPE = #{objectType}</if>
+			<if test="rtspId != null">,RTSP_ID = #{rtspId}</if>
+			<if test="rtspPw != null">,RTSP_PW = #{rtspPw}</if>
+			<if test="mediaServer != null">,MEDIA_SERVER = #{mediaServer}</if>
+			<if test="connectMode != null">,CONNECT_MODE = #{connectMode}</if>
+			<if test="fps != null">,FPS = #{fps}</if>
+			<if test="status != null">,STATUS = #{status}</if>
+			,LAST_UPDUSR_ID = #{registerId}
+			,LAST_UPDT_DT = NOW()
+		</set>
+		where FACILITIES_ID = #{facilitiesId}
+	</update>
+	
+	<delete id="deleteFcltsList">
+		DELETE FROM FACILITIES
+		WHERE FACILITIES_ID IN <foreach collection="fcltsList" item="fclts" index="index" open="(" close=")" separator=",">
+			#{fclts}
+		</foreach>
+	</delete>
+	
+	<delete id="deleteFcltsNoList">
+		DELETE FROM FACILITIES
+		WHERE ESNTL_IDNTFC_NO IN <foreach collection="fcltsList" item="fclts" index="index" open="(" close=")" separator=",">
+			#{fclts}
+		</foreach>
+	</delete>
+</mapper>

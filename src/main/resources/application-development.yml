@@ -1,0 +1,42 @@
+spring:
+  profiles: development
+  product:
+    name: auto_dev
+  http:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+  devtools: 
+    livereload: 
+      enabled: true
+
+  datasource:
+    mot-ds: 
+      mot-type: postgresql
+      jdbc-url: jdbc:postgresql://192.168.0.14/geoserver
+      username: n3n
+      password: n3n1004#
+      driver-class-name: org.postgresql.Driver
+      test-while-idle: true
+      test-on-borrow: true       
+      mybatis:
+        mapper-locations: classpath*:mybatis/mapper/postgresql/**/*.xml 
+        type-handlers-package: kr.co.n3n.smartcity.common.typehandler
+        executor-type: batch        
+          
+server:
+  port: 9020
+  context-path: /
+  session:
+    timeout: 3600
+
+  tomcat:
+    max-threads: 10
+    uri-encoding: UTF-8
+
+
+  jsp-servlet:
+    init-parameters:
+      development: true
+

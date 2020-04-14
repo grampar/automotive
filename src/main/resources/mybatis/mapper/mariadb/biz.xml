@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="biz">
+    
+    <select id="getBizList" resultType="kr.co.n3n.smartcity.model.CommMap">        
+		SELECT 
+			JOB_PROCESS_ID ,
+			JOB_SUBJECT ,
+			JOB_BGNDE ,
+			JOB_BEGIN_TIME ,
+			JOB_ENDDE ,
+			JOB_END_TIME ,
+			JOB_DTLS ,
+			JOB_RQESTER ,
+			REGISTER_ID ,
+			REGISTER_DT
+		FROM JOB_PROCESS
+    </select>
+    
+    
+    
+    <select id="getBizListPage" resultType="kr.co.n3n.smartcity.model.CommMap">   
+    	SELECT DISTINCT VV.JOB_PROCESS_ID , 
+		         VV.JOB_SUBJECT , 
+			     VV.JOB_DTLS , 
+				 VV.JOB_RQESTER_NM ,
+				 VV.JOB_BGNDE ,
+				 VV.JOB_BEGIN_TIME ,
+				 VV.JOB_ENDDE ,
+				 VV.JOB_END_TIME ,
+				 CONCAT(STR_TO_DATE(CONCAT(VV.JOB_BGNDE,VV.JOB_BEGIN_TIME) , '%Y%m%d%H%i') , ' ~ ' , STR_TO_DATE(CONCAT(VV.JOB_ENDDE,VV.JOB_END_TIME) , '%Y%m%d%H%i')) AS BIZ_DATE_TIME , 
+				 STR_TO_DATE(CONCAT(VV.JOB_BGNDE,VV.JOB_BEGIN_TIME) , '%Y%m%d%H%i') AS BIZ_DATE_TIME_ST ,
+				 STR_TO_DATE(CONCAT(VV.JOB_ENDDE,VV.JOB_END_TIME) , '%Y%m%d%H%i') AS BIZ_DATE_TIME_ED
+				 
+		FROM (
+			SELECT 
+				JP.JOB_PROCESS_ID ,
+				JP.JOB_SUBJECT ,
+				JP.JOB_BGNDE ,
+				JP.JOB_BEGIN_TIME ,
+				JP.JOB_ENDDE ,
+				JP.JOB_END_TIME ,
+				JP.JOB_DTLS ,
+				JP.JOB_RQESTER ,
+				(SELECT IU.USER_NM FROM USER IU WHERE IU.USER_ID = JP.JOB_RQESTER) AS JOB_RQESTER_NM ,
+				JP.REGISTER_ID ,
+				JP.REGISTER_DT ,
+				JPU.JOB_USER_ID 
+			FROM JOB_PROCESS JP JOIN JOB_PROCESS_USER JPU ON (JP.JOB_PROCESS_ID = JPU.JOB_PROCESS_ID)
+		) VV JOIN USER US ON (VV.JOB_USER_ID = US.USER_ID)
+		WHERE 1=1
+		  AND (VV.JOB_RQESTER = #{userId} OR VV.JOB_USER_ID = #{userId})
+		<if test="jobCharger != null and jobCharger != ''">
+		  AND US.USER_NM LIKE CONCAT('%',#{jobCharger},'%')
+		</if>
+		<if test="jobRqester != null and jobRqester != ''">
+		  AND VV.JOB_RQESTER_NM LIKE CONCAT('%',#{jobRqester},'%')
+		</if>
+		<if test="jobSubject != null and jobSubject != ''">
+		  AND VV.JOB_SUBJECT LIKE CONCAT('%',#{jobSubject},'%')
+		</if>
+		<if test="startDateTime != null and startDateTime != '' and endDateTime != null and endDateTime != ''">
+		  AND STR_TO_DATE(CONCAT(VV.JOB_BGNDE,VV.JOB_BEGIN_TIME) , '%Y%m%d%H%i') BETWEEN STR_TO_DATE(#{startDateTime} , '%Y%m%d%H%i') AND STR_TO_DATE(#{endDateTime} , '%Y%m%d%H%i')
+		  AND STR_TO_DATE(CONCAT(VV.JOB_ENDDE,VV.JOB_END_TIME) , '%Y%m%d%H%i') BETWEEN STR_TO_DATE(#{startDateTime} , '%Y%m%d%H%i') AND STR_TO_DATE(#{endDateTime} , '%Y%m%d%H%i')
+    	</if>
+    	ORDER BY  VV.JOB_BGNDE DESC , VV.JOB_BEGIN_TIME DESC , VV.JOB_ENDDE DESC , VV.JOB_END_TIME DESC
+    	<if test="startNum != null and startNum != ''">
+			LIMIT #{startNum}, #{pageCnt}
+		</if>
+    </select>
+    
+    
+    <select id="getBizListPageCnt" resultType="kr.co.n3n.smartcity.model.CommMap">        
+		SELECT COUNT(*) AS TOTAL_COUNT
+		FROM (
+			SELECT DISTINCT VV.JOB_PROCESS_ID , 
+			       VV.JOB_SUBJECT , 
+					 VV.JOB_DTLS , 
+					 VV.JOB_RQESTER_NM ,
+					 VV.JOB_BGNDE ,
+					 VV.JOB_BEGIN_TIME ,
+					 VV.JOB_ENDDE ,
+					 VV.JOB_END_TIME ,
+					 CONCAT(STR_TO_DATE(CONCAT(VV.JOB_BGNDE,VV.JOB_BEGIN_TIME) , '%Y%m%d%H%i') , ' ~ ' , STR_TO_DATE(CONCAT(VV.JOB_ENDDE,VV.JOB_END_TIME) , '%Y%m%d%H%i')) AS BIZ_DATE_TIME
+			FROM (
+				SELECT 
+					JP.JOB_PROCESS_ID ,
+					JP.JOB_SUBJECT ,
+					JP.JOB_BGNDE ,
+					JP.JOB_BEGIN_TIME ,
+					JP.JOB_ENDDE ,
+					JP.JOB_END_TIME ,
+					JP.JOB_DTLS ,
+					JP.JOB_RQESTER ,
+					(SELECT IU.USER_NM FROM USER IU WHERE IU.USER_ID = JP.JOB_RQESTER) AS JOB_RQESTER_NM ,
+					JP.REGISTER_ID ,
+					JP.REGISTER_DT ,
+					JPU.JOB_USER_ID 
+				FROM JOB_PROCESS JP JOIN JOB_PROCESS_USER JPU ON (JP.JOB_PROCESS_ID = JPU.JOB_PROCESS_ID)
+			) VV JOIN USER US ON (VV.JOB_USER_ID = US.USER_ID)
+			WHERE 1=1
+			  AND (VV.JOB_RQESTER = #{userId} OR VV.JOB_USER_ID = #{userId})
+			<if test="jobCharger != null and jobCharger != ''">
+			  AND US.USER_NM LIKE CONCAT('%',#{jobCharger},'%')
+			</if>
+			<if test="jobRqester != null and jobRqester != ''">
+			  AND VV.JOB_RQESTER_NM LIKE CONCAT('%',#{jobRqester},'%')
+			</if>
+			<if test="jobSubject != null and jobSubject != ''">
+			  AND VV.JOB_SUBJECT LIKE CONCAT('%',#{jobSubject},'%')
+			</if>
+			<if test="startDateTime != null and startDateTime != '' and endDateTime != null and endDateTime != ''">
+			  AND STR_TO_DATE(CONCAT(VV.JOB_BGNDE,VV.JOB_BEGIN_TIME) , '%Y%m%d%H%i') BETWEEN STR_TO_DATE(#{startDateTime} , '%Y%m%d%H%i') AND STR_TO_DATE(#{endDateTime} , '%Y%m%d%H%i')
+			  AND STR_TO_DATE(CONCAT(VV.JOB_ENDDE,VV.JOB_END_TIME) , '%Y%m%d%H%i') BETWEEN STR_TO_DATE(#{startDateTime} , '%Y%m%d%H%i') AND STR_TO_DATE(#{endDateTime} , '%Y%m%d%H%i')
+	    	</if>
+	    ) VVV
+		
+    </select>
+    
+    
+    
+    <select id="getTreeDataUers" resultType="kr.co.n3n.smartcity.model.CommMap">        
+		SELECT VV.USER_GROUP_ID , VV.USER_GROUP_NM , VV.UPPER_GROUP_ID , VV.DEPTH , VV.IS_POLDER
+		FROM (
+			SELECT
+				 UG.USER_GROUP_ID
+				,UG.USER_GROUP_NM
+			   ,UG.UPPER_GROUP_ID
+			   ,UG.DEPTH
+				,'Y' AS IS_POLDER
+			FROM USER_GROUP UG 
+			UNION ALL
+			SELECT 
+				 UU.USER_ID AS USER_GROUP_ID,
+				 UU.USER_NM AS USER_GROUP_NM,
+				 (SELECT GG.USER_GROUP_ID FROM USER_GROUP GG WHERE GG.USER_GROUP_ID = UU.USER_GROUP_ID) AS UPPER_GROUP_ID,
+				 (SELECT GG.DEPTH FROM USER_GROUP GG WHERE GG.USER_GROUP_ID = UU.USER_GROUP_ID) AS DEPTH,
+				 'N' AS IS_POLDER
+			FROM USER UU
+			WHERE UU.USE_AT = 'Y'
+		) VV
+    </select>
+    
+    
+    
+    <insert id="insertTmpBiz">
+		INSERT INTO  JOB_PROCESS_CN_TMPR_STRE  (
+			JOB_RQESTER_ID , JOB_PROCESS_TMPR_STRE_CN
+		)
+		VALUES (
+			#{regId} , #{tmpMsg}
+		)
+    </insert>
+    
+    
+    <insert id="updateTmpBiz">
+		UPDATE  JOB_PROCESS_CN_TMPR_STRE
+			SET JOB_PROCESS_TMPR_STRE_CN = #{tmpMsg}
+		WHERE JOB_RQESTER_ID = #{regId}
+    </insert>
+    
+    
+    <select id="getSavedTmpBizCnt" resultType="kr.co.n3n.smartcity.model.CommMap">  
+	    SELECT COUNT(*) AS CNT FROM JOB_PROCESS_CN_TMPR_STRE WHERE JOB_RQESTER_ID = #{regId}
+    </select>
+    
+    
+    
+    <insert id="saveBiz" useGeneratedKeys="true" keyProperty="process_seq" keyColumn="JOB_PROCESS_ID">
+    	INSERT INTO JOB_PROCESS (
+			JOB_SUBJECT ,
+			JOB_BGNDE , JOB_BEGIN_TIME , JOB_ENDDE , JOB_END_TIME ,
+			JOB_DTLS ,
+			JOB_RQESTER ,
+			REGISTER_ID , REGISTER_DT
+		)
+		VALUES(
+			#{jobReqTitle} ,
+			#{stDate} , #{stTime} , #{edDate} , #{edTime} ,
+			#{msg} ,
+			#{regId} ,
+			#{regId} , NOW()
+		)
+    </insert>
+    
+    <update id="updateBizPop">
+    	UPDATE JOB_PROCESS
+		SET
+			JOB_SUBJECT 	= #{jobReqTitle} ,
+			JOB_BGNDE 		= #{stDate} ,
+			JOB_BEGIN_TIME 	= #{stTime} ,
+			JOB_ENDDE 		= #{edDate} ,
+			JOB_END_TIME 	= #{edTime} ,
+			JOB_DTLS 		= #{msg} ,
+			JOB_RQESTER 	= #{regId}
+		WHERE JOB_PROCESS_ID = #{jobProcessId}
+    </update>
+    
+    <insert id="saveBizToUsers">
+    	INSERT INTO JOB_PROCESS_USER (
+			JOB_PROCESS_ID , JOB_USER_ID
+		)
+		VALUES (
+			#{process_seq} , #{uid}
+		)
+    </insert>
+    
+    <delete id="deleteBizToUsers">
+    	DELETE FROM JOB_PROCESS_USER WHERE JOB_PROCESS_ID = #{jobProcessId}
+    </delete>
+    
+    
+    <select id="getTmpBiz" resultType="kr.co.n3n.smartcity.model.CommMap">       
+    	SELECT 
+			JPU_SEQ , JOB_RQESTER_ID , JOB_PROCESS_TMPR_STRE_CN
+		FROM JOB_PROCESS_CN_TMPR_STRE 
+		WHERE JOB_RQESTER_ID = #{regId}
+		ORDER BY REGISTER_DT DESC
+    </select>
+    
+    
+    
+    <delete id="deleteMsgBiz">       
+    	DELETE FROM JOB_PROCESS_CN_TMPR_STRE 
+		WHERE JPU_SEQ = #{seq}
+    </delete>
+    
+    
+    
+    <update id="updateBiz">
+    	UPDATE JOB_PROCESS
+		SET
+			JOB_SUBJECT = #{detailSubject} ,
+			JOB_BGNDE = #{stDate} ,
+			JOB_BEGIN_TIME = #{stTime} ,
+			JOB_ENDDE = #{edDate} ,
+			JOB_END_TIME = #{edTime} ,
+			JOB_DTLS = #{dtls}
+		WHERE JOB_PROCESS_ID = #{jobProcessId}
+    </update>
+    
+    <select id="selectBizDetailInfo" resultType="kr.co.n3n.smartcity.model.CommMap">  
+	    SELECT 
+			JOB_PROCESS_ID , JOB_SUBJECT , JOB_BGNDE , JOB_BEGIN_TIME , JOB_ENDDE ,
+			JOB_END_TIME , JOB_DTLS , JOB_RQESTER , REGISTER_ID , REGISTER_DT ,
+			CONCAT(DATE_FORMAT(STR_TO_DATE(CONCAT(JOB_BGNDE,JOB_BEGIN_TIME) , '%Y%m%d%H%i') , '%Y-%m-%d %H:%i') , ' - ' , DATE_FORMAT(STR_TO_DATE(CONCAT(JOB_ENDDE,JOB_END_TIME) , '%Y%m%d%H%i') , '%Y-%m-%d %H:%i'))AS DISP_DT 
+		FROM JOB_PROCESS
+		WHERE JOB_PROCESS_ID = #{jobProcessId}
+    </select>
+    
+    
+    <select id="selectBizUserList" resultType="kr.co.n3n.smartcity.model.CommMap">  
+    	SELECT 
+			JPU_SEQ , JOB_PROCESS_ID , JOB_USER_ID , 
+			(SELECT USER_GROUP_NM FROM USER_GROUP UG WHERE UG.USER_GROUP_ID =  (SELECT USER_GROUP_ID FROM USER UU WHERE UU.USER_ID = JOB_USER_ID)) AS USER_GROUP ,
+			(SELECT USER_NM FROM USER UU WHERE UU.USER_ID = JOB_USER_ID) AS USER_NM
+		FROM JOB_PROCESS_USER
+		WHERE JOB_PROCESS_ID = #{jobProcessId}
+    </select>
+</mapper>

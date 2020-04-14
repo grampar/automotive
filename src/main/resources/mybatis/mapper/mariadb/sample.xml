@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="sample">
+    
+    <select id="getBoardList" resultType="kr.co.n3n.smartcity.model.CommMap">        
+		SELECT 
+			ID, GID, TITLE, LVL, STEP, REG_DATE 
+		FROM BOARD
+		ORDER BY GID DESC, LVL ASC
+    </select>
+    
+    
+    <insert id="insertBoard">
+    	INSERT INTO 
+    	BOARD(
+    		ID, GID, TITLE, CMNT, LVL, STEP, REG_DATE
+    	)
+    	VALUES(
+    		#{ID}, #{GID}, #{TITLE}, #{CMNT}, #{LVL}, #{STEP}, now()
+    	)
+    </insert>
+    
+    <update id="updateBoard">
+    	UPDATE BOARD SET 
+    		TITLE=#{TITLE}, 
+    		CMNT=#{CMNT} 
+    	WHERE ID=#{id}
+    </update>
+    
+</mapper>

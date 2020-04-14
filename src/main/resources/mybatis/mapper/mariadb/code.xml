@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="code">
+	
+	<select id="getCodeGroupList" resultType="kr.co.n3n.smartcity.model.CommMap">        
+		SELECT 
+			CG.CODE_GROUP_ID
+			,CG.CODE_GROUP_NM
+			,CG.USE_AT
+			,C.CODE_NM AS USE_NM
+			,CG.REGISTER_ID
+			,DATE_FORMAT(CG.REGISTER_DT,'%Y-%m-%d %T') AS REGISTER_DT
+			,CG.LAST_UPDUSR_ID
+			,DATE_FORMAT(CG.LAST_UPDT_DT,'%Y-%m-%d %T') AS LAST_UPDT_DT
+		FROM CODE_GROUP CG
+		LEFT JOIN CODE C ON C.CODE_ID = CG.USE_AT AND C.CODE_GROUP_ID = 'U001'
+		WHERE 1 = 1
+		<if test="keyword != null and keyword != ''">
+			AND (CG.CODE_GROUP_ID LIKE CONCAT('%',#{keyword},'%') 
+				OR CG.CODE_GROUP_NM LIKE CONCAT('%',#{keyword},'%'))
+		</if>
+		<if test="useAt != null and useAt != ''">
+			AND CG.USE_AT = #{useAt}
+		</if>
+		ORDER BY CG.REGISTER_DT DESC
+		<if test="startNum != null and startNum != ''">
+			LIMIT #{startNum}, #{pageCnt}
+		</if>
+    </select>
+    
+    <select id="getCodeGroupListCnt" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT 
+			COUNT(*) AS TOTAL_COUNT
+		FROM CODE_GROUP
+		WHERE 1 = 1
+		<if test="keyword != null and keyword != ''">
+			AND (CODE_GROUP_ID LIKE CONCAT('%',#{keyword},'%') 
+				OR CODE_GROUP_NM LIKE CONCAT('%',#{keyword},'%'))
+		</if>
+    </select>
+    
+    <insert id="insertCodeGroup">
+    	INSERT INTO CODE_GROUP(
+    		CODE_GROUP_ID
+    		,CODE_GROUP_NM
+    		,USE_AT
+    		,REGISTER_ID
+    		,REGISTER_DT
+    		,LAST_UPDUSR_ID
+    		,LAST_UPDT_DT
+    	)VALUES(
+    		#{codeGroupId}
+    		,#{codeGroupNm}
+    		,'Y'
+    		,#{registerId}
+    		,NOW()
+    		,#{registerId}
+    		,NOW()
+    	)
+    </insert>
+    
+    <select id="selectCodeGroupIdCnt" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT
+    		COUNT(*) AS COUNT
+    	FROM CODE_GROUP
+    	WHERE CODE_GROUP_ID = #{codeGroupId}
+    </select>
+    
+    <update id="updateCodeGroup">
+    	UPDATE CODE_GROUP
+    	SET CODE_GROUP_NM = #{codeGroupNm}
+    		,USE_AT = #{useAt}
+    		,LAST_UPDUSR_ID = #{registerId}
+    		,LAST_UPDT_DT = NOW()
+    	WHERE CODE_GROUP_ID = #{codeGroupId}
+    </update>
+    
+    <update id="deleteCodeGroup">
+    	UPDATE CODE_GROUP
+    		SET USE_AT = 'N'
+	    		,LAST_UPDUSR_ID = #{registerId}
+				,LAST_UPDT_DT = NOW()
+    	WHERE CODE_GROUP_ID = #{codeGroupId}
+    </update>
+    
+    <select id="getCodeList" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT
+			CD.CODE_GROUP_ID
+			,CD.CODE_ID
+			,CD.CODE_NM
+			,CD.SORT_ORDR
+			,CD.ICON
+			,CD.REGISTER_ID
+			,CD.USE_AT
+			,C1.CODE_NM AS USE_NM
+			,DATE_FORMAT(CD.REGISTER_DT,'%Y-%m-%d %T') AS REGISTER_DT
+			,CD.LAST_UPDUSR_ID
+			,DATE_FORMAT(CD.LAST_UPDT_DT,'%Y-%m-%d %T') AS LAST_UPDT_DT
+			,CG.CODE_GROUP_NM
+		FROM CODE CD
+		LEFT JOIN CODE_GROUP CG ON CG.CODE_GROUP_ID = CD.CODE_GROUP_ID
+		LEFT JOIN CODE C1 ON C1.CODE_ID = CD.USE_AT AND C1.CODE_GROUP_ID = 'U001'
+		WHERE 1 = 1
+		<if test="keyword != null and keyword != ''">
+			AND (
+				CD.CODE_ID LIKE CONCAT('%',#{keyword},'%')
+				OR CD.CODE_NM LIKE CONCAT('%',#{keyword},'%')
+			)
+		</if>
+		<if test="codeGroupId != null and codeGroupId != ''">
+			AND CD.CODE_GROUP_ID = #{codeGroupId}
+		</if>
+		ORDER BY CD.REGISTER_DT DESC
+		<if test="startNum != null and startNum != ''">
+			LIMIT #{startNum}, #{pageCnt}
+		</if>
+    </select>
+    
+    <select id="getCodeListCnt" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT
+			COUNT(*) AS TOTAL_COUNT
+		FROM CODE
+		WHERE 1 = 1
+		<if test="keyword != null and keyword != ''">
+			AND (
+				CODE_ID LIKE CONCAT('%',#{keyword},'%')
+				OR CODE_NM LIKE CONCAT('%',#{keyword},'%')
+			)
+		</if>
+		<if test="codeGroupId != null and codeGroupId != ''">
+			AND CODE_GROUP_ID = #{codeGroupId}
+		</if>
+    </select>
+    
+    <insert id="insertCode">
+    	INSERT INTO CODE(
+    		CODE_GROUP_ID
+			,CODE_ID
+			,CODE_NM
+			<if test="sortOrdr != null and sort != ''">,SORT_ORDR</if>
+			<if test="icon != null and icon != ''">,ICON</if>
+			<if test="useAt != null and useAt != ''">,USE_AT</if>
+			,REGISTER_ID
+			,REGISTER_DT
+			,LAST_UPDUSR_ID
+			,LAST_UPDT_DT
+    	)VALUES(
+    		#{codeGroupId}
+    		,#{codeId}
+    		,#{codeNm}
+    		<if test="sortOrdr != null and sortOrdr != ''">,#{sortOrdr}</if>
+    		<if test="icon != null and icon != ''">,#{icon}</if>
+    		<if test="useAt != null and useAt != ''">,#{useAt}</if>
+    		,#{registerId}
+    		,NOW()
+    		,#{registerId}
+    		,NOW()
+    	)
+    </insert>
+    
+    <select id="selectUseCodeIdCnt" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT
+    		COUNT(*) AS COUNT
+    	FROM CODE
+    	WHERE CODE_ID = #{codeId}
+    	AND CODE_GROUP_ID = #{codeGroupId}
+    </select>
+    
+    <update id="updateCode">
+    	UPDATE CODE
+    	set CODE_NM = #{codeNm}
+    		,USE_AT = #{useAt}
+			<if test="sortOrdr != null and sortOrdr != ''">,SORT_ORDR = #{sortOrdr}</if>
+			<if test="icon != null and icon != ''">,ICON = #{icon}</if>
+			,LAST_UPDUSR_ID = #{registerId}
+			,LAST_UPDT_DT = NOW()
+		WHERE CODE_ID = #{codeId}
+		AND CODE_GROUP_ID = #{codeGroupId}
+    </update>
+    
+    <update id="deleteCodeByGroup">
+    	UPDATE CODE
+    	SET USE_AT = 'N'
+    		,LAST_UPDUSR_ID = #{registerId}
+			,LAST_UPDT_DT = NOW()
+    	WHERE CODE_GROUP_ID = #{codeGroupId}
+    </update>
+    
+    <update id="deleteCode">
+    	UPDATE CODE
+    	SET USE_AT = 'N'
+    		,LAST_UPDUSR_ID = #{registerId}
+			,LAST_UPDT_DT = NOW()
+    	WHERE CODE_GROUP_ID = #{codeGroupId}
+    	AND CODE_ID = #{codeId}
+    </update>
+    
+    <resultMap id="CodesMap" type="kr.co.n3n.smartcity.model.CommMap" >
+    	<association property="CODE_LIST" column="{codeGroupId = CODE_GROUP_ID}" select="selectCodes"/>
+    </resultMap>
+    
+    <select id="selectGroupCodeList" resultMap="CodesMap">
+    	SELECT 
+			CODE_GROUP_ID
+			,CODE_GROUP_NM
+		FROM CODE_GROUP
+		WHERE 1 = 1
+		AND CODE_GROUP_ID IN <foreach collection="codeGroupList" item="code" index="index" open="(" close=")" separator=",">
+			#{code}
+		</foreach>
+    </select>
+    
+    <select id="selectCodes" resultType="kr.co.n3n.smartcity.model.CommMap">
+    	SELECT
+			CODE_GROUP_ID
+			,CODE_ID
+			,CODE_NM
+			,SORT_ORDR
+			,ICON
+		FROM CODE
+		WHERE CODE_GROUP_ID = #{codeGroupId}
+		AND USE_AT = 'Y'
+		ORDER BY SORT_ORDR
+    </select>
+</mapper>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="websocket">
+  
+    
+    <select id="getFacilities" resultType="kr.co.n3n.smartcity.model.CommMap">        
+		SELECT 
+			A.FACILITIES_ID, 
+			A.FACILITIES_NAME,
+			A.RTSP_ID,
+			A.RTSP_PW,
+			A.LATITUDE,
+			A.LONGITUDE,
+			A.BITRATE, 
+			A.CODEC,
+			A.USE_PTZ,
+			A.PTZ_DRIVER,
+			A.USE_RDS,
+			A.CONNECT_MODE,
+			A.FPS,
+			A.FACILITIES_URL RTSP_URL,
+			C.NAME MD_NAME,
+			C.IP MD_IP,
+			C.PORT MD_PORT
+		FROM FACILITIES A
+		LEFT JOIN M_MAPNG B ON A.FACILITIES_ID=B.FACILITIES_ID
+		LEFT JOIN M_SERVER C ON B.NAME=C.NAME
+		WHERE A.FACILITIES_ID=#{FACILITIES_ID}
+    </select>
+    
+    
+	
+</mapper>

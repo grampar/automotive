@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="menu">
+	
+	<select id="selectNewMenuId" resultType="kr.co.n3n.smartcity.model.CommMap">
+		SELECT CONCAT('ME' , LPAD(right(MAX(menu_id),18) + 1,18,0) ) AS menuId FROM MENU
+	</select>
+	
+	<select id="getMenuList" resultType="kr.co.n3n.smartcity.model.CommMap">
+		SELECT
+			MENU_ID
+			,MENU_NM
+			,MENU_DC
+			,UPPER_MENU_ID
+			,USE_AT
+			,SCRIN_URL
+			,TARGET
+			,DEPTH
+			,ODER
+			,FRONT_MENU_YN
+			,VIEW_ID
+			,CTL_URL
+		FROM MENU
+		WHERE 1=1
+		<if test="useAt != null and useAt != ''">
+			AND USE_AT = #{useAt}
+		</if>
+		ORDER BY DEPTH, ODER
+	</select>
+	
+	<insert id="insertMenu">
+		INSERT INTO MENU(
+			MENU_ID
+			,MENU_NM
+			<if test="menuDc != null">,MENU_DC</if>
+			<if test="upperMenuId != nul">,UPPER_MENU_ID</if>
+			<if test="useAt != null">,USE_AT</if>
+			<if test="scrinUrl != null">,SCRIN_URL</if>
+			<if test="depth != null">,DEPTH</if>
+			<if test="oder != null">,ODER</if>
+			<if test="frontMenuYn != null">,FRONT_MENU_YN</if>
+			<if test="viewId != null">,VIEW_ID</if>
+			<if test="ctlUrl != null">,CTL_URL</if>
+			,REGISTER_ID
+			,REGISTER_DT
+			,LAST_UPDUSR_ID
+			,LAST_UPDT_DT
+		)VALUES(
+			#{menuId}
+			,#{menuNm}
+			<if test="menuDc != null">,#{menuDc}</if>
+			<if test="upperMenuId != null">,#{upperMenuId}</if>
+			<if test="useAt != null">,#{useAt}</if>
+			<if test="scrinUrl != null">,#{scrinUrl}</if>
+			<if test="depth != null">,#{depth}</if>
+			<if test="oder != null">,#{oder}</if>
+			<if test="frontMenuYn != null">,#{frontMenuYn}</if>
+			<if test="viewId != null">,#{viewId}</if>
+			<if test="ctlUrl != null">,#{ctlUrl}</if>
+			,#{registerId}
+			,NOW()
+			,#{registerId}
+			,NOW()
+		)ON DUPLICATE KEY UPDATE
+			MENU_NM = #{menuNm}
+			<if test="menuDc != null">,MENU_DC = #{menuDc}</if>
+			<if test="upperMenuId != null">,UPPER_MENU_ID = #{upperMenuId}</if>
+			<if test="useAt != null">,USE_AT = #{useAt}</if>
+			<if test="scrinUrl != null">,SCRIN_URL = #{scrinUrl}</if>
+			<if test="depth != null">,DEPTH = #{depth}</if>
+			<if test="oder != null">,ODER = #{oder}</if>
+			<if test="frontMenuYn != null">,FRONT_MENU_YN = #{frontMenuYn}</if>
+			<if test="viewId != null">,VIEW_ID = #{viewId}</if>
+			<if test="ctlUrl != null">,CTL_URL = #{ctlUrl}</if>
+			,LAST_UPDUSR_ID = #{registerId}
+			,LAST_UPDT_DT = NOW()
+	</insert>
+	
+	<update id="updateMenu">
+		UPDATE MENU
+		<set>
+			MENU_NM = #{menuNm},
+			<if test="menuDc != null">MENU_DC = #{menuDc}</if>
+			<if test="upperMenuId != null">UPPER_MENU_ID = #{upperMenuId},</if>
+			<if test="useAt != null">USE_AT = #{useAt},</if>
+			<if test="scrinUrl != null">SCRIN_URL = #{scrinUrl},</if>
+			<if test="depth != null">DEPTH = #{depth},</if>
+			<if test="oder != null">ODER = #{oder},</if>
+			<if test="frontMenuYn">FRONT_MENU_YN = #{frontMenuYn},</if>
+			LAST_UPDUSR_ID = #{registerId},
+			LAST_UPDT_DT = NOW()
+		</set>
+		WHERE MENU_ID = #{menuId}
+	</update>
+	
+	<delete id="deleteMenu">
+		DELETE FROM MENU
+		WHERE MENU_ID = #{menuId}
+	</delete>
+</mapper>
