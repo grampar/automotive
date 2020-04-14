@@ -19,25 +19,14 @@ target/
 *.iml
 *.ipr
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
 
 ### VS Code ###
-.vscode/
+vue_src/client/.vscode/
 
 
 .DS_Store
-node_modules
-/dist
-
-# local env files
-.env.local
-.env.*.local
+vue_src/client/node_modules/
+vue_src/client/dist/
 
 # Log files
 npm-debug.log*
